@@ -2,9 +2,12 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
+import type { CalculationResult } from '@/lib/calculator';
 
 interface LeadCaptureProps {
   onSubmit: (data: LeadData) => void;
+  answers: Record<string, number | string>;
+  result: CalculationResult;
 }
 
 export interface LeadData {
@@ -14,7 +17,7 @@ export interface LeadData {
   phone: string;
 }
 
-export default function LeadCapture({ onSubmit }: LeadCaptureProps) {
+export default function LeadCapture({ onSubmit, answers, result }: LeadCaptureProps) {
   const [form, setForm] = useState<LeadData>({
     name: '',
     email: '',
@@ -31,19 +34,30 @@ export default function LeadCapture({ onSubmit }: LeadCaptureProps) {
 
     setLoading(true);
 
-    const webhookUrl = process.env.NEXT_PUBLIC_GHL_WEBHOOK_URL;
-    if (webhookUrl) {
-      try {
-        await fetch(webhookUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(form),
-        });
-      } catch (err) {
-        console.error('Webhook error:', err);
-      }
-    } else {
-      console.log('Lead captured:', form);
+    const payload = {
+      name: form.name.trim(),
+      email: form.email.trim().toLowerCase(),
+      company: form.company.trim(),
+      phone: form.phone.trim(),
+      answers,
+      score: result.score,
+      revenueGapLow: result.revenueGapLow,
+      revenueGapHigh: result.revenueGapHigh,
+      currentRevenue: result.currentAnnualRevenue,
+      potentialRevenue: result.potentialAnnualRevenue,
+      weakAreas: result.weakAreas.map(w => w.label),
+    };
+
+    try {
+      const res = await fetch('/api/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      console.log('[storm-calc] Submission result:', data);
+    } catch (err) {
+      console.error('[storm-calc] Submission error:', err);
     }
 
     setLoading(false);

@@ -39,18 +39,7 @@ export default function Calculator() {
     }
   };
 
-  const handleLeadSubmit = (data: LeadData) => {
-    const payload = { ...data, answers, timestamp: new Date().toISOString() };
-    const webhookUrl = process.env.NEXT_PUBLIC_GHL_WEBHOOK_URL;
-    if (webhookUrl) {
-      fetch(webhookUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      }).catch(console.error);
-    } else {
-      console.log('Full lead payload:', payload);
-    }
+  const handleLeadSubmit = (_data: LeadData) => {
     setStep('results');
   };
 
@@ -122,7 +111,7 @@ export default function Calculator() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -20 }}
                 >
-                  <LeadCapture onSubmit={handleLeadSubmit} />
+                  <LeadCapture onSubmit={handleLeadSubmit} answers={answers} result={result} />
                 </motion.div>
               )}
 
