@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { upsertStormContact } from "@/lib/ghl";
+import { upsertStormContact, type StormCalculatorData } from "@/lib/ghl";
 
 export const dynamic = "force-dynamic";
 
@@ -92,6 +92,21 @@ export async function POST(req: NextRequest) {
 
         const scoreTag = score >= 70 ? "Strong" : score >= 40 ? "Needs Work" : "Critical";
 
+        const calculatorData: StormCalculatorData = {
+          score,
+          revenueGapLow,
+          revenueGapHigh,
+          currentRevenue: currentRevenue || 0,
+          potentialRevenue: potentialRevenue || 0,
+          scoreTier: scoreTag,
+          monthlyLeads: answers.monthly_leads || 0,
+          avgTicket: answers.avg_ticket || 0,
+          closeRate: answers.close_rate || 0,
+          followUpSpeed: answers.follow_up_speed || '',
+          automationLevel: answers.automation || '',
+          trackingMethod: answers.tracking || '',
+        };
+
         const result = await upsertStormContact({
           fullName: name,
           email: email.trim().toLowerCase(),
@@ -104,6 +119,7 @@ export async function POST(req: NextRequest) {
             "Industry - Storm Restoration",
           ],
           note,
+          calculatorData,
         });
 
         ghlContactId = result.contactId;

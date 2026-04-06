@@ -82,16 +82,73 @@ export async function addContactNote(contactId: string, note: string) {
   return ok;
 }
 
+// Storm Revenue Calculator custom field IDs (GHL)
+const STORM_CUSTOM_FIELDS: Record<string, string> = {
+  storm_readiness_score:   "8sJuR7t5tDOkLEa43zIw",
+  storm_revenue_gap_low:   "syeBzMChU6L5afVH18ih",
+  storm_revenue_gap_high:  "mIdXwaUXcIMWNYAuy92k",
+  storm_current_revenue:   "9VK2BjPHcNFAPSwBDjsg",
+  storm_potential_revenue:  "6UWC1anZVGiLbsozlqx7",
+  storm_score_tier:        "V1bbX8sw5yE7UQHnTPAa",
+  storm_monthly_leads:     "nGUaSianHe4hfiAYuviy",
+  storm_avg_ticket:        "L8jmOB8Wgl4EfWMlCIlh",
+  storm_close_rate:        "Vc8w0DDN3SvHdj41bavj",
+  storm_follow_up_speed:   "s2fR29F9PL5AjKo94tyd",
+  storm_automation_level:  "E4FVC5YoywvR1aVllNTt",
+  storm_tracking_method:   "6xT3YlbiXS2fNGywYRhz",
+  storm_calculator_date:   "9yBZMOl4q59pYeKtEyy6",
+};
+
+export interface StormCalculatorData {
+  score: number;
+  revenueGapLow: number;
+  revenueGapHigh: number;
+  currentRevenue: number;
+  potentialRevenue: number;
+  scoreTier: string;
+  monthlyLeads: number;
+  avgTicket: number;
+  closeRate: number;
+  followUpSpeed: string;
+  automationLevel: string;
+  trackingMethod: string;
+}
+
+function buildCustomFieldValues(data: StormCalculatorData): { id: string; field_value: string | number }[] {
+  return [
+    { id: STORM_CUSTOM_FIELDS.storm_readiness_score, field_value: data.score },
+    { id: STORM_CUSTOM_FIELDS.storm_revenue_gap_low, field_value: data.revenueGapLow },
+    { id: STORM_CUSTOM_FIELDS.storm_revenue_gap_high, field_value: data.revenueGapHigh },
+    { id: STORM_CUSTOM_FIELDS.storm_current_revenue, field_value: data.currentRevenue },
+    { id: STORM_CUSTOM_FIELDS.storm_potential_revenue, field_value: data.potentialRevenue },
+    { id: STORM_CUSTOM_FIELDS.storm_score_tier, field_value: data.scoreTier },
+    { id: STORM_CUSTOM_FIELDS.storm_monthly_leads, field_value: data.monthlyLeads },
+    { id: STORM_CUSTOM_FIELDS.storm_avg_ticket, field_value: data.avgTicket },
+    { id: STORM_CUSTOM_FIELDS.storm_close_rate, field_value: data.closeRate },
+    { id: STORM_CUSTOM_FIELDS.storm_follow_up_speed, field_value: data.followUpSpeed.replace(/_/g, ' ') },
+    { id: STORM_CUSTOM_FIELDS.storm_automation_level, field_value: data.automationLevel },
+    { id: STORM_CUSTOM_FIELDS.storm_tracking_method, field_value: data.trackingMethod },
+    { id: STORM_CUSTOM_FIELDS.storm_calculator_date, field_value: new Date().toISOString().split('T')[0] },
+  ];
+}
+
 export async function upsertStormContact(input: {
   fullName: string; email: string; phone?: string; companyName?: string;
   tagsToAdd: string[]; note: string;
+  calculatorData?: StormCalculatorData;
 }) {
   const existing = await findContactByEmail(input.email);
+
+  const customFieldPayload = input.calculatorData
+    ? { customFields: buildCustomFieldValues(input.calculatorData) }
+    : {};
+
   if (!existing) {
     const created = await createContact(input);
     await updateContact(created.id, {
       tags: Array.from(new Set([...(created.tags || []), ...input.tagsToAdd])),
       companyName: input.companyName || undefined,
+      ...customFieldPayload,
     });
     await addContactNote(created.id, input.note);
     return { contactId: created.id, created: true };
@@ -101,6 +158,7 @@ export async function upsertStormContact(input: {
     email: input.email,
     tags: mergedTags,
     ...(input.companyName ? { companyName: input.companyName } : {}),
+    ...customFieldPayload,
   });
   await addContactNote(existing.id, input.note);
   return { contactId: existing.id, created: false };
