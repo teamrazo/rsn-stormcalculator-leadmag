@@ -124,20 +124,20 @@ export default function Results({ result, insights }: ResultsProps) {
         transition={{ delay: 2 }}
       >
         <p className="text-brand-muted mb-4">
-          Ready to close the gap and capture every storm opportunity?
+          See exactly how top restoration companies are closing the gap — and how you can too.
         </p>
         <motion.a
-          href="https://ai.razorsharpnetworks.com/widget/booking/31jbAMWJlvv9pPbTSD9h"
+          href="https://webclass.razorsharpnetworks.com/"
           target="_blank"
           rel="noopener noreferrer"
           className="inline-block w-full md:w-auto px-10 py-5 bg-gradient-to-r from-brand-primary to-brand-accent text-white font-bold text-xl rounded-xl shadow-[0_0_24px_rgba(168,58,196,0.25)] hover:shadow-[0_0_32px_rgba(168,58,196,0.4)] transition-all"
           whileHover={{ scale: 1.03, y: -2 }}
           whileTap={{ scale: 0.98 }}
         >
-          Book a Free Storm Systems Audit →
+          Watch the Free Webclass — Close Your Revenue Gap →
         </motion.a>
         <p className="text-xs text-brand-muted mt-3">
-          Free 30-minute consultation. No obligation. Just clarity.
+          Free training. Learn the systems that capture every storm opportunity.
         </p>
       </motion.div>
     </motion.div>
