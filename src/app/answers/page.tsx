@@ -4,9 +4,9 @@ import Link from 'next/link';
 const SITE_URL = 'https://stormcalculator.razorsharpnetworks.com';
 
 export const metadata: Metadata = {
-  title: 'Storm Restoration Revenue FAQ — Leads, Follow-Up, Automation | RazoRSharp Networks',
+  title: 'Storm Revenue FAQ | RazoRSharp Networks',
   description:
-    'Expert answers on storm restoration revenue, Storm Readiness Scores, lead follow-up speed, AI automation, CRM selection, and ticket size benchmarks — from RazoRSharp Networks.',
+    'Get answers on storm revenue, lead follow-up, AI automation, CRM setup, and recovery opportunities for restoration businesses.',
   keywords: [
     'storm restoration revenue',
     'storm readiness score',
@@ -24,12 +24,20 @@ export const metadata: Metadata = {
     canonical: `${SITE_URL}/answers`,
   },
   openGraph: {
-    title: 'Storm Restoration Revenue FAQ | RazoRSharp Networks',
+    title: 'Storm Revenue FAQ | RazoRSharp Networks',
     description:
-      'Answers on storm readiness scores, lead follow-up speed, AI automation, and revenue recovery for restoration businesses.',
+      'Get answers on storm revenue, lead follow-up, AI automation, CRM setup, and recovery opportunities for restoration businesses.',
     type: 'website',
     siteName: 'RazoRSharp Networks',
     url: `${SITE_URL}/answers`,
+    images: [
+      {
+        url: `${SITE_URL}/opengraph-image`,
+        width: 1200,
+        height: 630,
+        alt: 'Storm Revenue FAQ | RazoRSharp Networks',
+      },
+    ],
   },
 };
 

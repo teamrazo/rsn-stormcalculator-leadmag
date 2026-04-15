@@ -12,7 +12,7 @@ const SITE_URL = 'https://stormcalculator.razorsharpnetworks.com';
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
-  title: 'Storm Revenue Recovery Calculator | How Much Are You Leaving on the Table?',
+  title: 'Storm Revenue Recovery Calculator | RazoRSharp Networks',
   description:
     '6 questions. 90 seconds. See the exact dollar amount your storm restoration business is missing after every storm event.',
   keywords: [
