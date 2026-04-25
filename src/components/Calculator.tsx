@@ -10,12 +10,12 @@ import Question from './Question';
 import LeadCapture, { type LeadData } from './LeadCapture';
 import Results from './Results';
 import RainEffect from './RainEffect';
-import TrustBadgeRow from './TrustBadgeRow';
+import HeroLanding from './HeroLanding';
 
-type Step = 'questions' | 'capture' | 'results';
+type Step = 'landing' | 'questions' | 'capture' | 'results';
 
 export default function Calculator() {
-  const [step, setStep] = useState<Step>('questions');
+  const [step, setStep] = useState<Step>('landing');
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState<Record<string, number | string>>({});
 
@@ -45,6 +45,10 @@ export default function Calculator() {
     setStep('results');
   };
 
+  const handleStart = () => {
+    setStep('questions');
+  };
+
   const result = calculateResults(answers as unknown as Answers);
   const insights = generateInsights(answers as unknown as Answers);
 
@@ -55,7 +59,7 @@ export default function Calculator() {
       <div className="relative z-10 min-h-screen flex flex-col">
         {/* Header */}
         <header className="pt-6 pb-4 px-4">
-          <div className="max-w-4xl mx-auto flex items-center justify-between">
+          <div className={`mx-auto flex items-center justify-between ${step === 'landing' ? 'max-w-6xl' : 'max-w-4xl'}`}>
             <div className="flex items-center gap-3">
               <img
                 src="/RS_Only_Purple_Logo_Transparent.png"
@@ -77,20 +81,12 @@ export default function Calculator() {
           </div>
         </header>
 
-        {/* Tagline on first question */}
-        {step === 'questions' && currentQuestion === 0 && (
-          <div className="px-4 text-center -mb-2">
-            <p className="text-sm italic tracking-wide text-brand-muted-light">
-              ⚡ Every Storm Is an Opportunity.
-            </p>
-            <TrustBadgeRow className="mx-auto mt-4 max-w-2xl" />
-          </div>
-        )}
-
         {/* Main Content */}
         <main className="flex-1 flex items-center px-4 py-8">
-          <div className="w-full max-w-4xl mx-auto">
+          <div className={`w-full mx-auto ${step === 'landing' ? 'max-w-6xl' : 'max-w-4xl'}`}>
             <AnimatePresence mode="wait">
+              {step === 'landing' && <HeroLanding onStart={handleStart} />}
+
               {step === 'questions' && (
                 <motion.div
                   key={`question-${currentQuestion}`}
