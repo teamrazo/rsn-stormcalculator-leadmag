@@ -111,7 +111,9 @@ export async function POST(req: NextRequest) {
           phone: phone || undefined,
           companyName: company || undefined,
           tagsToAdd: [
-            "storm:calculator:completed",
+            "Activity - Calculator - Storm Revenue Calculator Complete",
+            "Status - Lead - Storm Calculator",
+            `Storm Score - ${score >= 70 ? "Strong" : score >= 40 ? "Needs Work" : "Critical"}`,
             "Industry - Storm Restoration",
           ],
           note,
