@@ -1,6 +1,7 @@
 'use client';
 
 import type { ReactNode } from 'react';
+import Link from 'next/link';
 import { motion } from 'framer-motion';
 import TrustBadgeRow from './TrustBadgeRow';
 
@@ -82,13 +83,13 @@ export default function HeroLanding({ onStart }: HeroLandingProps) {
         aria-hidden="true"
       />
       <div
-        className="absolute inset-0 bg-[linear-gradient(180deg,rgba(10,10,15,0.18)_0%,rgba(10,10,15,0.72)_30%,rgba(10,10,15,0.94)_100%),linear-gradient(110deg,rgba(10,10,15,0.9)_12%,rgba(10,10,15,0.58)_48%,rgba(139,63,217,0.2)_100%)]"
+        className="absolute inset-0 bg-[linear-gradient(to_right,rgba(10,10,15,0.95)_0%,rgba(10,10,15,0.7)_50%,rgba(10,10,15,0.3)_100%)]"
         aria-hidden="true"
       />
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(168,58,196,0.2),transparent_32%)]" aria-hidden="true" />
 
-      <div className="relative px-5 py-6 sm:px-8 sm:py-8 lg:px-12 lg:py-10">
-        <div className="mx-auto flex min-h-[calc(100vh-3rem)] max-w-6xl flex-col justify-center">
+      <div className="relative px-4 py-4 sm:px-6 sm:py-5 lg:px-8 lg:py-6">
+        <div className="flex min-h-[calc(100vh-3rem)] flex-col justify-start pt-8">
           <motion.div
             initial={{ opacity: 0, y: 18 }}
             animate={{ opacity: 1, y: 0 }}
@@ -99,11 +100,11 @@ export default function HeroLanding({ onStart }: HeroLandingProps) {
               Storm Revenue Recovery Calculator
             </div>
 
-            <h1 className="mt-4 max-w-4xl text-4xl font-bold leading-tight text-brand-fg sm:text-5xl lg:text-[3.5rem]">
+            <h1 className="mt-3 max-w-4xl text-4xl font-bold leading-tight text-brand-fg sm:text-5xl lg:text-6xl">
               Every Storm Creates Demand. Most Restoration Businesses Capture a Fraction of It.
             </h1>
 
-            <p className="mt-3 max-w-2xl text-base leading-7 text-brand-muted-light sm:text-lg">
+            <p className="mt-2 max-w-2xl text-base leading-7 text-brand-muted-light sm:text-lg">
               Find out how much revenue, time, and efficiency you&apos;re leaving behind — in 90 seconds.
             </p>
           </motion.div>
@@ -112,7 +113,7 @@ export default function HeroLanding({ onStart }: HeroLandingProps) {
             initial={{ opacity: 0, y: 18 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.16, duration: 0.45 }}
-            className="mt-5 flex flex-col items-start"
+            className="mt-4 flex flex-col items-start"
           >
             <motion.button
               onClick={onStart}
@@ -129,7 +130,7 @@ export default function HeroLanding({ onStart }: HeroLandingProps) {
             initial={{ opacity: 0, y: 18 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.24, duration: 0.45 }}
-            className="mt-10 grid gap-4 lg:grid-cols-3"
+            className="mt-12 grid gap-4 lg:grid-cols-3"
           >
             {steps.map((step, index) => (
               <div
@@ -148,6 +149,40 @@ export default function HeroLanding({ onStart }: HeroLandingProps) {
                 </div>
               </div>
             ))}
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 18 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.32, duration: 0.45 }}
+            className="mt-10 rounded-2xl border border-white/8 bg-brand-card/60 p-6 backdrop-blur-md"
+          >
+            <p className="mb-4 text-xs font-semibold uppercase tracking-[0.22em] text-brand-primary-light/90">
+              Built for every storm restoration vertical
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {[
+                { label: 'Automotive Hail Repair', href: '/hail-damage-repair-dallas-tx' },
+                { label: 'Roofing Contractors', href: '/hail-damage-repair-oklahoma-city-ok' },
+                { label: 'Siding Companies', href: '/hail-damage-repair-denver-co' },
+                { label: 'Gutter Companies', href: '/hail-damage-repair-colorado-springs-co' },
+                { label: 'Window Companies', href: '/hail-damage-repair-kansas-city-mo' },
+                { label: 'Commercial Roofing', href: '/hail-damage-repair-houston-tx' },
+                { label: 'Water Damage Mitigation', href: '/hail-damage-repair-tulsa-ok' },
+                { label: 'Wind Damage Repair', href: '/hail-damage-repair-wichita-ks' },
+                { label: 'General Storm Restoration', href: '/hail-damage-repair-fort-worth-tx' },
+                { label: 'Insurance Restoration Specialists', href: '/hail-damage-repair-san-antonio-tx' },
+                { label: 'Property Restoration Companies', href: '/hail-damage-repair-omaha-ne' },
+              ].map((v) => (
+                <Link
+                  key={v.label}
+                  href={v.href}
+                  className="rounded-full border border-brand-primary/20 bg-brand-primary/10 px-3 py-1.5 text-xs font-medium text-brand-primary-light transition-colors hover:bg-brand-primary/20 hover:border-brand-primary/40"
+                >
+                  {v.label}
+                </Link>
+              ))}
+            </div>
           </motion.div>
         </div>
       </div>

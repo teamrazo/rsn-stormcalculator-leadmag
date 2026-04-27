@@ -126,9 +126,9 @@ function TrustBadgeRow({ items }: { items: Array<{ label: string; icon: any }> }
 
 function ProofLayer() {
   const proofItems = [
-    '1,200+ restoration businesses diagnosed',
     'Leads contacted in 5 min convert 100× more',
-    'Avg $248K revenue gap identified',
+    'Most contractors lose 20–40% of storm revenue to slow follow-up',
+    'Speed-to-contact is the #1 driver of close rate',
   ];
 
   return (

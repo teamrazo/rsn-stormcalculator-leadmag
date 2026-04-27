@@ -120,9 +120,9 @@ export default function Results({ result, insights }: ResultsProps) {
 
         <div className="grid gap-3 md:grid-cols-3">
           {[
-            '4,200+ businesses diagnosed',
-            '47% avg reduction in repeat work',
-            '11 hrs/week reclaimed on average',
+            'Leads followed up in 5 min convert 100× more',
+            'Most restoration businesses lose 20–40% of storm revenue',
+            'Speed-to-contact is the #1 driver of close rate',
           ].map((item) => (
             <div
               key={item}
