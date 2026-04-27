@@ -90,15 +90,13 @@ export async function POST(req: NextRequest) {
       try {
         const note = buildGhlNote({ name, email, company, phone, answers, score, revenueGapLow, revenueGapHigh, currentRevenue, potentialRevenue, weakAreas: weakAreas || [], submittedAt });
 
-        const scoreTag = score >= 70 ? "Strong" : score >= 40 ? "Needs Work" : "Critical";
-
         const calculatorData: StormCalculatorData = {
           score,
           revenueGapLow,
           revenueGapHigh,
           currentRevenue: currentRevenue || 0,
           potentialRevenue: potentialRevenue || 0,
-          scoreTier: scoreTag,
+          scoreTier: score >= 70 ? "Strong" : score >= 40 ? "Needs Work" : "Critical",
           monthlyLeads: answers.monthly_leads || 0,
           avgTicket: answers.avg_ticket || 0,
           closeRate: answers.close_rate || 0,
@@ -113,9 +111,7 @@ export async function POST(req: NextRequest) {
           phone: phone || undefined,
           companyName: company || undefined,
           tagsToAdd: [
-            "Activity - Calculator - Storm Revenue Calculator Complete",
-            "Status - Lead - Storm Calculator",
-            `Storm Score - ${scoreTag}`,
+            "storm:calculator:completed",
             "Industry - Storm Restoration",
           ],
           note,

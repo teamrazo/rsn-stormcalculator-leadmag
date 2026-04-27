@@ -82,21 +82,21 @@ export async function addContactNote(contactId: string, note: string) {
   return ok;
 }
 
-// Storm Revenue Calculator custom field IDs (GHL)
+// Storm Revenue Calculator custom field IDs (GHL) - Workflow Spec Aligned
 const STORM_CUSTOM_FIELDS: Record<string, string> = {
-  storm_readiness_score:   "8sJuR7t5tDOkLEa43zIw",
-  storm_revenue_gap_low:   "syeBzMChU6L5afVH18ih",
-  storm_revenue_gap_high:  "mIdXwaUXcIMWNYAuy92k",
-  storm_current_revenue:   "9VK2BjPHcNFAPSwBDjsg",
-  storm_potential_revenue:  "6UWC1anZVGiLbsozlqx7",
-  storm_score_tier:        "V1bbX8sw5yE7UQHnTPAa",
-  storm_monthly_leads:     "nGUaSianHe4hfiAYuviy",
-  storm_avg_ticket:        "L8jmOB8Wgl4EfWMlCIlh",
-  storm_close_rate:        "Vc8w0DDN3SvHdj41bavj",
-  storm_follow_up_speed:   "s2fR29F9PL5AjKo94tyd",
-  storm_automation_level:  "E4FVC5YoywvR1aVllNTt",
-  storm_tracking_method:   "6xT3YlbiXS2fNGywYRhz",
-  storm_calculator_date:   "9yBZMOl4q59pYeKtEyy6",
+  storms_last_12_months: "bPGSGQSEJQdygXJpcWXc",
+  avg_jobs_closed_per_storm: "DEVCqKsgaA7PczfEfiiS",
+  avg_job_ticket: "XmQfC0pM3vVe8nNyoARe",
+  unclosed_leads_per_storm: "jC5rvq1zKdlOdg4Je1fd",
+  follow_up_speed: "EMjSM5eavXCVaLOdFY8b",
+  biggest_bottleneck: "t8yAyyTyHXK1vhjQIqka",
+  revenue_captured: "PaizVlylGet2HLavdovy",
+  revenue_missed: "Vj7tMhUo6YiY7tENixnB",
+  speed_penalty: "iMwN0r4bwNKJdw5V0Wa1",
+  annual_recovery_opportunity: "cxRKgdeXMlcylM4PZZ25",
+  storm_readiness_score: "8sJuR7t5tDOkLEa43zIw",
+  booking_link: "TJwoTb43hQJRwxTXugu9",
+  storm_calculator_date: "9yBZMOl4q59pYeKtEyy6",
 };
 
 export interface StormCalculatorData {
@@ -112,22 +112,49 @@ export interface StormCalculatorData {
   followUpSpeed: string;
   automationLevel: string;
   trackingMethod: string;
+  // Additional fields for workflow spec alignment
+  stormsLast12Months?: number;
+  avgJobsClosedPerStorm?: number;
+  unclosedLeadsPerStorm?: number;
+  biggestBottleneck?: string;
+  speedPenalty?: number;
+  bookingLink?: string;
 }
 
 function buildCustomFieldValues(data: StormCalculatorData): { id: string; field_value: string | number }[] {
+  // Calculate derived values for workflow spec fields
+  const stormsLast12Months = data.stormsLast12Months || 3; // Default estimate
+  const avgJobsClosedPerStorm = Math.round((data.monthlyLeads * (data.closeRate / 100)) / stormsLast12Months) || 10;
+  const unclosedLeadsPerStorm = Math.round((data.monthlyLeads * (1 - data.closeRate / 100)) / stormsLast12Months) || 5;
+  const speedPenalty = data.speedPenalty || Math.round(data.revenueGapLow * 0.3); // Speed accounts for ~30% of gap
+  
+  // Determine biggest bottleneck based on score components
+  let biggestBottleneck = data.biggestBottleneck;
+  if (!biggestBottleneck) {
+    if (data.followUpSpeed.includes('24') || data.followUpSpeed.includes('hours')) {
+      biggestBottleneck = 'Slow lead response';
+    } else if (data.automationLevel.includes('Manual') || data.automationLevel.includes('None')) {
+      biggestBottleneck = 'No automation';
+    } else if (data.closeRate < 30) {
+      biggestBottleneck = 'Poor close rate';
+    } else {
+      biggestBottleneck = 'Lead tracking';
+    }
+  }
+
   return [
+    { id: STORM_CUSTOM_FIELDS.storms_last_12_months, field_value: stormsLast12Months },
+    { id: STORM_CUSTOM_FIELDS.avg_jobs_closed_per_storm, field_value: avgJobsClosedPerStorm },
+    { id: STORM_CUSTOM_FIELDS.avg_job_ticket, field_value: data.avgTicket },
+    { id: STORM_CUSTOM_FIELDS.unclosed_leads_per_storm, field_value: unclosedLeadsPerStorm },
+    { id: STORM_CUSTOM_FIELDS.follow_up_speed, field_value: data.followUpSpeed.replace(/_/g, ' ') },
+    { id: STORM_CUSTOM_FIELDS.biggest_bottleneck, field_value: biggestBottleneck },
+    { id: STORM_CUSTOM_FIELDS.revenue_captured, field_value: data.currentRevenue },
+    { id: STORM_CUSTOM_FIELDS.revenue_missed, field_value: data.revenueGapLow },
+    { id: STORM_CUSTOM_FIELDS.speed_penalty, field_value: speedPenalty },
+    { id: STORM_CUSTOM_FIELDS.annual_recovery_opportunity, field_value: data.revenueGapHigh },
     { id: STORM_CUSTOM_FIELDS.storm_readiness_score, field_value: data.score },
-    { id: STORM_CUSTOM_FIELDS.storm_revenue_gap_low, field_value: data.revenueGapLow },
-    { id: STORM_CUSTOM_FIELDS.storm_revenue_gap_high, field_value: data.revenueGapHigh },
-    { id: STORM_CUSTOM_FIELDS.storm_current_revenue, field_value: data.currentRevenue },
-    { id: STORM_CUSTOM_FIELDS.storm_potential_revenue, field_value: data.potentialRevenue },
-    { id: STORM_CUSTOM_FIELDS.storm_score_tier, field_value: data.scoreTier },
-    { id: STORM_CUSTOM_FIELDS.storm_monthly_leads, field_value: data.monthlyLeads },
-    { id: STORM_CUSTOM_FIELDS.storm_avg_ticket, field_value: data.avgTicket },
-    { id: STORM_CUSTOM_FIELDS.storm_close_rate, field_value: data.closeRate },
-    { id: STORM_CUSTOM_FIELDS.storm_follow_up_speed, field_value: data.followUpSpeed.replace(/_/g, ' ') },
-    { id: STORM_CUSTOM_FIELDS.storm_automation_level, field_value: data.automationLevel },
-    { id: STORM_CUSTOM_FIELDS.storm_tracking_method, field_value: data.trackingMethod },
+    { id: STORM_CUSTOM_FIELDS.booking_link, field_value: data.bookingLink || 'https://calendar.razorsharpnetworks.com/storm-audit' },
     { id: STORM_CUSTOM_FIELDS.storm_calculator_date, field_value: new Date().toISOString().split('T')[0] },
   ];
 }
