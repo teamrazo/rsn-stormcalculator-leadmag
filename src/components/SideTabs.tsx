@@ -24,6 +24,7 @@ export default function SideTabs({ auditUrl }: SideTabsProps) {
   // Recommend form state
   const [recommendName, setRecommendName] = useState('');
   const [recommendEmail, setRecommendEmail] = useState('');
+  const [recommendPhone, setRecommendPhone] = useState('');
   const [recommendation, setRecommendation] = useState('');
   const [recommendLoading, setRecommendLoading] = useState(false);
   const [recommendSuccess, setRecommendSuccess] = useState(false);
@@ -83,6 +84,7 @@ export default function SideTabs({ auditUrl }: SideTabsProps) {
         body: JSON.stringify({
           name: recommendName,
           email: recommendEmail,
+          phone: recommendPhone,
           recommendation,
           auditUrl,
         }),
@@ -100,6 +102,18 @@ export default function SideTabs({ auditUrl }: SideTabsProps) {
       setRecommendLoading(false);
     }
   };
+
+  const supportValid =
+    supportName.trim() !== '' &&
+    supportEmail.trim() !== '' &&
+    supportPhone.trim() !== '' &&
+    supportMessage.trim() !== '';
+
+  const recommendValid =
+    recommendName.trim() !== '' &&
+    recommendEmail.trim() !== '' &&
+    recommendPhone.trim() !== '' &&
+    recommendation.trim() !== '';
 
   const inputStyle: React.CSSProperties = {
     width: '100%',
@@ -248,30 +262,33 @@ export default function SideTabs({ auditUrl }: SideTabsProps) {
               ) : (
                 <form onSubmit={handleSupportSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                   <div>
-                    <label style={labelStyle}>Name</label>
+                    <label style={labelStyle}>Name <span style={{ color: '#f87171' }}>*</span></label>
                     <input
                       style={inputStyle}
                       placeholder="Your name"
+                      required
                       value={supportName}
                       onChange={e => setSupportName(e.target.value)}
                     />
                   </div>
                   <div>
-                    <label style={labelStyle}>Email</label>
+                    <label style={labelStyle}>Email <span style={{ color: '#f87171' }}>*</span></label>
                     <input
                       type="email"
                       style={inputStyle}
                       placeholder="you@example.com"
+                      required
                       value={supportEmail}
                       onChange={e => setSupportEmail(e.target.value)}
                     />
                   </div>
                   <div>
-                    <label style={labelStyle}>Phone</label>
+                    <label style={labelStyle}>Phone <span style={{ color: '#f87171' }}>*</span></label>
                     <input
                       type="tel"
                       style={inputStyle}
                       placeholder="(555) 123-4567"
+                      required
                       value={supportPhone}
                       onChange={e => setSupportPhone(e.target.value)}
                     />
@@ -292,14 +309,14 @@ export default function SideTabs({ auditUrl }: SideTabsProps) {
                   )}
                   <button
                     type="submit"
-                    disabled={supportLoading || !supportMessage.trim()}
+                    disabled={supportLoading || !supportValid}
                     onMouseEnter={() => setSupportSubmitHover(true)}
                     onMouseLeave={() => setSupportSubmitHover(false)}
                     style={{
                       width: '100%',
-                      backgroundColor: supportSubmitHover && !supportLoading && supportMessage.trim() ? '#8B3FD9' : '#A83AC4',
-                      opacity: supportLoading || !supportMessage.trim() ? 0.5 : 1,
-                      cursor: supportLoading || !supportMessage.trim() ? 'not-allowed' : 'pointer',
+                      backgroundColor: supportSubmitHover && !supportLoading && supportValid ? '#8B3FD9' : '#A83AC4',
+                      opacity: supportLoading || !supportValid ? 0.5 : 1,
+                      cursor: supportLoading || !supportValid ? 'not-allowed' : 'pointer',
                       color: 'white',
                       fontWeight: 700,
                       padding: '12px',
@@ -349,22 +366,35 @@ export default function SideTabs({ auditUrl }: SideTabsProps) {
               ) : (
                 <form onSubmit={handleRecommendSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                   <div>
-                    <label style={labelStyle}>Name <span style={{ color: 'rgba(135,135,142,0.5)' }}>(optional)</span></label>
+                    <label style={labelStyle}>Name <span style={{ color: '#f87171' }}>*</span></label>
                     <input
                       style={inputStyle}
                       placeholder="Your name"
+                      required
                       value={recommendName}
                       onChange={e => setRecommendName(e.target.value)}
                     />
                   </div>
                   <div>
-                    <label style={labelStyle}>Email <span style={{ color: 'rgba(135,135,142,0.5)' }}>(optional)</span></label>
+                    <label style={labelStyle}>Email <span style={{ color: '#f87171' }}>*</span></label>
                     <input
                       type="email"
                       style={inputStyle}
                       placeholder="you@example.com"
+                      required
                       value={recommendEmail}
                       onChange={e => setRecommendEmail(e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <label style={labelStyle}>Phone <span style={{ color: '#f87171' }}>*</span></label>
+                    <input
+                      type="tel"
+                      style={inputStyle}
+                      placeholder="(555) 123-4567"
+                      required
+                      value={recommendPhone}
+                      onChange={e => setRecommendPhone(e.target.value)}
                     />
                   </div>
                   <div>
@@ -383,14 +413,14 @@ export default function SideTabs({ auditUrl }: SideTabsProps) {
                   )}
                   <button
                     type="submit"
-                    disabled={recommendLoading || !recommendation.trim()}
+                    disabled={recommendLoading || !recommendValid}
                     onMouseEnter={() => setRecommendSubmitHover(true)}
                     onMouseLeave={() => setRecommendSubmitHover(false)}
                     style={{
                       width: '100%',
-                      backgroundColor: recommendSubmitHover && !recommendLoading && recommendation.trim() ? '#8B3FD9' : '#A83AC4',
-                      opacity: recommendLoading || !recommendation.trim() ? 0.5 : 1,
-                      cursor: recommendLoading || !recommendation.trim() ? 'not-allowed' : 'pointer',
+                      backgroundColor: recommendSubmitHover && !recommendLoading && recommendValid ? '#8B3FD9' : '#A83AC4',
+                      opacity: recommendLoading || !recommendValid ? 0.5 : 1,
+                      cursor: recommendLoading || !recommendValid ? 'not-allowed' : 'pointer',
                       color: 'white',
                       fontWeight: 700,
                       padding: '12px',
