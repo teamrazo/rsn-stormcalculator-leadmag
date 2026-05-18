@@ -23,6 +23,9 @@ export async function POST(request: Request) {
       phone: phone || undefined,
       source: 'Storm Calculator Support Tab',
       tags: ['report - site - storm-calculator', 'action - support - request'],
+      customFields: message
+        ? [{ key: 'support_message', field_value: message }]
+        : undefined,
     };
     // Remove undefined fields
     Object.keys(contactPayload).forEach(k => contactPayload[k] === undefined && delete contactPayload[k]);

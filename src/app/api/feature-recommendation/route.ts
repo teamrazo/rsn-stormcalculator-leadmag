@@ -23,6 +23,9 @@ export async function POST(request: Request) {
       phone: phone || undefined,
       source: 'Storm Calculator Recommend Tab',
       tags: ['report - site - storm-calculator', 'action - recommendation - request'],
+      customFields: recommendation
+        ? [{ key: 'feature_recommendation', field_value: recommendation }]
+        : undefined,
     };
     // Remove undefined fields
     Object.keys(contactPayload).forEach(k => contactPayload[k] === undefined && delete contactPayload[k]);

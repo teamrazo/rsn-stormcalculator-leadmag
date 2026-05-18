@@ -3,6 +3,20 @@
 import { useState } from 'react';
 import { X } from 'lucide-react';
 
+function isValidEmail(value: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
+}
+
+/** Normalizes a phone number to E.164 (e.g. +15551234567). Returns null if it is not a valid number. */
+function normalizePhone(value: string): string | null {
+  const trimmed = value.trim();
+  const digits = trimmed.replace(/\D/g, '');
+  if (digits.length === 10) return `+1${digits}`;
+  if (digits.length === 11 && digits.startsWith('1')) return `+${digits}`;
+  if (trimmed.startsWith('+') && digits.length >= 8 && digits.length <= 15) return `+${digits}`;
+  return null;
+}
+
 interface SideTabsProps {
   auditUrl?: string;
 }
@@ -44,16 +58,27 @@ export default function SideTabs({ auditUrl }: SideTabsProps) {
 
   const handleSupportSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSupportLoading(true);
     setSupportError(null);
+
+    if (!isValidEmail(supportEmail)) {
+      setSupportError('Please enter a valid email address.');
+      return;
+    }
+    const supportPhoneE164 = normalizePhone(supportPhone);
+    if (!supportPhoneE164) {
+      setSupportError('Please enter a valid phone number, e.g. (555) 123-4567.');
+      return;
+    }
+
+    setSupportLoading(true);
     try {
       const res = await fetch('/api/support-ticket', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: supportName,
-          email: supportEmail,
-          phone: supportPhone,
+          email: supportEmail.trim(),
+          phone: supportPhoneE164,
           message: supportMessage,
           auditUrl,
         }),
@@ -75,16 +100,27 @@ export default function SideTabs({ auditUrl }: SideTabsProps) {
 
   const handleRecommendSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setRecommendLoading(true);
     setRecommendError(null);
+
+    if (!isValidEmail(recommendEmail)) {
+      setRecommendError('Please enter a valid email address.');
+      return;
+    }
+    const recommendPhoneE164 = normalizePhone(recommendPhone);
+    if (!recommendPhoneE164) {
+      setRecommendError('Please enter a valid phone number, e.g. (555) 123-4567.');
+      return;
+    }
+
+    setRecommendLoading(true);
     try {
       const res = await fetch('/api/feature-recommendation', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: recommendName,
-          email: recommendEmail,
-          phone: recommendPhone,
+          email: recommendEmail.trim(),
+          phone: recommendPhoneE164,
           recommendation,
           auditUrl,
         }),
