@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
+import Image from 'next/image';
 import { AnimatePresence, motion } from 'framer-motion';
 import { questions } from '@/lib/questions';
 import { calculateResults, type Answers } from '@/lib/calculator';
@@ -61,23 +62,33 @@ export default function Calculator() {
         <header className="sticky top-0 z-50 w-full border-b border-white/8 bg-[#0A0A0F]/95 backdrop-blur-md">
           <div className="flex h-12 w-full items-center justify-between px-4 sm:px-6">
             <div className="flex items-center gap-3">
-              <img
+              <Image
                 src="/RS_Only_Purple_Logo_Transparent.png"
                 alt="RazoRSharp Networks"
+                width={28}
+                height={28}
                 className="h-7 w-auto"
               />
               <span className="text-sm font-semibold text-brand-fg">
                 Storm Revenue Calculator
               </span>
             </div>
-            {step === 'questions' && currentQuestion > 0 && (
-              <button
-                onClick={handleBack}
-                className="text-sm text-brand-muted transition-colors hover:text-brand-fg"
+            <div className="flex items-center gap-4">
+              {step === 'questions' && currentQuestion > 0 && (
+                <button
+                  onClick={handleBack}
+                  className="text-sm text-brand-muted transition-colors hover:text-brand-fg"
+                >
+                  ← Back
+                </button>
+              )}
+              <a
+                href="tel:+14699662126"
+                className="whitespace-nowrap text-sm font-semibold text-brand-fg transition-colors hover:text-brand-primary-light"
               >
-                ← Back
-              </button>
-            )}
+                (469) 966-2126
+              </a>
+            </div>
           </div>
         </header>
 

@@ -1,6 +1,7 @@
 'use client';
 
 import type { ReactNode } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import TrustBadgeRow from './TrustBadgeRow';
@@ -77,10 +78,13 @@ export default function HeroLanding({ onStart }: HeroLandingProps) {
       transition={{ duration: 0.45, ease: 'easeOut' }}
       className="relative overflow-hidden"
     >
-      <div
-        className="absolute inset-0 bg-cover bg-center"
-        style={{ backgroundImage: "url('/storm-hero-bg.jpg')" }}
-        aria-hidden="true"
+      <Image
+        src="/storm-hero-bg.jpg"
+        alt=""
+        fill
+        priority
+        sizes="100vw"
+        className="object-cover object-center"
       />
       <div
         className="absolute inset-0 bg-[linear-gradient(to_right,rgba(10,10,15,0.95)_0%,rgba(10,10,15,0.7)_50%,rgba(10,10,15,0.3)_100%)]"
