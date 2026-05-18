@@ -108,9 +108,18 @@ export default function AnswersPage() {
         <div className="max-w-3xl mx-auto px-6 py-16">
           {/* Header */}
           <div className="mb-12">
-            <p className="text-sm font-semibold uppercase tracking-widest mb-3" style={{ color: 'var(--brand-primary)' }}>
-              RazoRSharp Networks
-            </p>
+            <div className="mb-3 flex items-center justify-between gap-4">
+              <p className="text-sm font-semibold uppercase tracking-widest" style={{ color: 'var(--brand-primary)' }}>
+                RazoRSharp Networks
+              </p>
+              <a
+                href="tel:+14699662126"
+                className="whitespace-nowrap text-sm font-semibold"
+                style={{ color: 'var(--brand-fg)' }}
+              >
+                (469) 966-2126
+              </a>
+            </div>
             <h1 className="text-3xl font-bold mb-4" style={{ color: 'var(--brand-fg)' }}>
               Storm Restoration Revenue FAQ
             </h1>

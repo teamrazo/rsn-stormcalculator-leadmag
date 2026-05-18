@@ -200,12 +200,21 @@ export default async function StatePage({
 
           {/* Header */}
           <div className="mb-12">
-            <p
-              className="text-sm font-semibold uppercase tracking-widest mb-3"
-              style={{ color: 'var(--brand-primary)' }}
-            >
-              RazoRSharp Networks &mdash; {stateName}
-            </p>
+            <div className="mb-3 flex items-center justify-between gap-4">
+              <p
+                className="text-sm font-semibold uppercase tracking-widest"
+                style={{ color: 'var(--brand-primary)' }}
+              >
+                RazoRSharp Networks &mdash; {stateName}
+              </p>
+              <a
+                href="tel:+14699662126"
+                className="whitespace-nowrap text-sm font-semibold"
+                style={{ color: 'var(--brand-fg)' }}
+              >
+                (469) 966-2126
+              </a>
+            </div>
             <h1 className="text-3xl sm:text-4xl font-bold mb-6" style={{ color: 'var(--brand-fg)' }}>
               {stateName} Storm &amp; Hail Damage Revenue Calculator
             </h1>
