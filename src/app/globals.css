@@ -158,6 +158,17 @@ input[type='range']::-moz-range-thumb {
   border: 1px solid rgba(168, 58, 196, 0.12);
 }
 
+/* Standardized footer links */
+.footer-link {
+  color: #87878E;
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.footer-link:hover {
+  color: #8B3FD9;
+}
+
 /* Scrollbar */
 ::-webkit-scrollbar {
   width: 8px;
