@@ -17,7 +17,7 @@ const LEGAL_LINKS: FooterLink[] = [
   { label: 'Cookie Policy', href: 'https://www.razorsharpnetworks.com/cookie-policy/' },
 ];
 
-const dotStyle: React.CSSProperties = { color: 'rgba(255,255,255,0.2)', userSelect: 'none' };
+const dotStyle: React.CSSProperties = { color: 'rgba(242,242,242,0.2)', userSelect: 'none' };
 
 function LinkRow({ links }: { links: FooterLink[] }) {
   return (
@@ -36,10 +36,10 @@ function LinkRow({ links }: { links: FooterLink[] }) {
 
 export function Footer() {
   return (
-    <footer style={{ marginTop: 96, paddingTop: 48, paddingBottom: 32, borderTop: '1px solid rgba(255,255,255,0.1)', background: '#0A0A0F', fontSize: 13, lineHeight: 1.4 }}>
+    <footer style={{ marginTop: 96, paddingTop: 48, paddingBottom: 32, borderTop: '1px solid rgba(242,242,242,0.1)', background: '#0A0A0F', fontSize: 13, lineHeight: 1.375 }}>
       <div style={{ maxWidth: 1440, margin: '0 auto', padding: '0 16px', textAlign: 'center', display: 'flex', flexDirection: 'column', gap: 8 }}>
         <div style={{ display: 'flex', justifyContent: 'center' }}>
-          <Image src="/rsn-logo-wide.png" alt="RazoRSharp Networks" width={138} height={28} style={{ opacity: 0.85 }} />
+          <Image src="/rsn-logo-full.png" alt="RazoRSharp Networks" width={138} height={28} className="footer-logo" />
         </div>
         <LinkRow links={NAV_LINKS} />
         <div style={{ color: '#87878E' }}>

@@ -166,7 +166,16 @@ input[type='range']::-moz-range-thumb {
 }
 
 .footer-link:hover {
-  color: #8B3FD9;
+  color: #A83AC4;
+}
+
+.footer-logo {
+  opacity: 0.8;
+  transition: opacity 0.15s ease;
+}
+
+.footer-logo:hover {
+  opacity: 1;
 }
 
 /* Scrollbar */
