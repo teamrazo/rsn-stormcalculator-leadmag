@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 
 export async function POST(request: Request) {
-  const { name, email, recommendation, auditUrl } = await request.json();
+  const { name, email, phone, recommendation, auditUrl } = await request.json();
 
   const ghlToken = process.env.GHL_PRIVATE_TOKEN?.trim().replace(/\n/g, '') || '';
   const locationId = process.env.GHL_LOCATION_ID?.trim().replace(/\n/g, '') || '';
@@ -20,8 +20,9 @@ export async function POST(request: Request) {
       firstName: (name || '').split(' ')[0] || 'Anonymous',
       lastName: (name || '').split(' ').slice(1).join(' ') || '',
       email: email || undefined,
+      phone: phone || undefined,
       source: 'Storm Calculator Recommend Tab',
-      tags: ['feature-request', 'storm-calculator', 'notify:feature-request', 'action - website_form - request'],
+      tags: ['report - site - storm-calculator', 'action - recommendation - request'],
     };
     // Remove undefined fields
     Object.keys(contactPayload).forEach(k => contactPayload[k] === undefined && delete contactPayload[k]);

@@ -22,7 +22,7 @@ export async function POST(request: Request) {
       email: email || undefined,
       phone: phone || undefined,
       source: 'Storm Calculator Support Tab',
-      tags: ['support-request', 'storm-calculator', 'notify:support-request', 'action - website_form - request'],
+      tags: ['report - site - storm-calculator', 'action - support - request'],
     };
     // Remove undefined fields
     Object.keys(contactPayload).forEach(k => contactPayload[k] === undefined && delete contactPayload[k]);
