@@ -158,6 +158,26 @@ input[type='range']::-moz-range-thumb {
   border: 1px solid rgba(168, 58, 196, 0.12);
 }
 
+/* Standardized footer links */
+.footer-link {
+  color: #87878E;
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.footer-link:hover {
+  color: #A83AC4;
+}
+
+.footer-logo {
+  opacity: 0.8;
+  transition: opacity 0.15s ease;
+}
+
+.footer-logo:hover {
+  opacity: 1;
+}
+
 /* Scrollbar */
 ::-webkit-scrollbar {
   width: 8px;
