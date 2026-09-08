@@ -1,0 +1,64 @@
+# LEVER AI Deployment Workflow
+# ─────────────────────────────────────────────────────────────────
+# LEVER (teamrazo) PRs: always auto-approve + auto-merge, no wait.
+# External PRs: require 1 human review by default.
+#   → To remove human review requirement for a repo, go to:
+#     GitHub → Repo Settings → Secrets and Variables → Actions → Variables
+#     Add variable: REQUIRE_HUMAN_REVIEW = false
+#
+# Repo prerequisites (Settings → Actions → General):
+#   - Workflow permissions: "Read and write permissions"
+#   - "Allow GitHub Actions to create and approve pull requests": ON
+#     (without this, the Auto-approve step fails with "GitHub Actions
+#     is not permitted to approve pull requests")
+# ─────────────────────────────────────────────────────────────────
+name: LEVER Auto-Deploy
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  # LEVER PRs: always auto-merge immediately
+  lever-auto-merge:
+    name: Auto-merge (LEVER)
+    if: github.event.pull_request.user.login == 'teamrazo'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Auto-approve
+        uses: hmarr/auto-approve-action@v4
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Merge (squash)
+        run: gh pr merge --squash --auto "${{ github.event.pull_request.number }}"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # External PRs: auto-merge only if REQUIRE_HUMAN_REVIEW != true
+  external-auto-merge:
+    name: Auto-merge (External, if reviews disabled)
+    if: |
+      github.event.pull_request.user.login != 'teamrazo' &&
+      vars.REQUIRE_HUMAN_REVIEW != 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Auto-approve
+        uses: hmarr/auto-approve-action@v4
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Merge (squash)
+        run: gh pr merge --squash --auto "${{ github.event.pull_request.number }}"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
