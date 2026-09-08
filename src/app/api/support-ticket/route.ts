@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { triggerGHLWorkflow } from '@/lib/notifications';
 
 export async function POST(request: Request) {
   const { name, email, phone, message, auditUrl } = await request.json();
@@ -67,6 +68,10 @@ export async function POST(request: Request) {
           body: `Support Request via Storm Calculator\nAudit URL: ${auditUrl || 'unknown'}\n\nMessage:\n${message}`,
         }),
       });
+    }
+
+    if (contactId) {
+      void triggerGHLWorkflow(String(contactId), ghlToken, version);
     }
 
     return NextResponse.json({ ok: true, contactId });
