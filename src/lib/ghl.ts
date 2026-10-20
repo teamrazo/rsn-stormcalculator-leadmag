@@ -1,3 +1,4 @@
+import { Attribution, attributionFields, attributionNote } from '@/lib/attribution';
 const BASE_URL = "https://services.leadconnectorhq.com";
 
 function getEnv(name: string) {
@@ -171,6 +172,7 @@ export async function upsertStormContact(input: {
   fullName: string; email: string; phone?: string; companyName?: string;
   tagsToAdd: string[]; note: string;
   calculatorData?: StormCalculatorData;
+  attribution?: Attribution;
 }) {
   const existing = await findContactByEmail(input.email);
 
@@ -178,23 +180,37 @@ export async function upsertStormContact(input: {
     ? { customFields: buildCustomFieldValues(input.calculatorData) }
     : {};
 
+  // First/last-touch attribution (RSN standard, lib/attribution.ts): new
+  // contacts get first_* + last_*, existing contacts get last_* only.
+  const withAttribution = async (id: string, patch: Record<string, any>, isNew: boolean) => {
+    const extra = input.attribution ? attributionFields(input.attribution, isNew) : [];
+    try {
+      await updateContact(id, { ...patch, customFields: [...(patch.customFields || []), ...extra] });
+    } catch (err) {
+      if (!extra.length) throw err;
+      // Location may not have the attribution fields yet: save everything else.
+      console.warn('[storm-calc] attribution fields rejected, retrying without them');
+      await updateContact(id, patch);
+    }
+  };
+  const note = input.attribution ? `${input.note}\n\n${attributionNote(input.attribution, !existing)}` : input.note;
+
   if (!existing) {
     const created = await createContact(input);
-    await updateContact(created.id, {
+    await withAttribution(created.id, {
       tags: Array.from(new Set([...(created.tags || []), ...input.tagsToAdd])),
       companyName: input.companyName || undefined,
       ...customFieldPayload,
-    });
-    await addContactNote(created.id, input.note);
+    }, true);
+    await addContactNote(created.id, note);
     return { contactId: created.id, created: true };
   }
   const mergedTags = Array.from(new Set([...(existing.tags || []), ...input.tagsToAdd]));
-  await updateContact(existing.id, {
-    email: input.email,
+  // Existing contact: name, email and company are not overwritten; tags merge.
+  await withAttribution(existing.id, {
     tags: mergedTags,
-    ...(input.companyName ? { companyName: input.companyName } : {}),
     ...customFieldPayload,
-  });
-  await addContactNote(existing.id, input.note);
+  }, false);
+  await addContactNote(existing.id, note);
   return { contactId: existing.id, created: false };
 }

@@ -231,6 +231,8 @@ export default function RootLayout({
           />
         </noscript>
         {children}
+        {/* Shared RSN first/last-touch capture (capture only, no partner bar yet). */}
+        <Script src="https://partner.razorsharpnetworks.com/embed/partner-bar.js" data-bar="off" data-site="stormcalculator.razorsharpnetworks.com" strategy="afterInteractive" />
         <Footer />
         <BackToTop />
         <SideTabs />

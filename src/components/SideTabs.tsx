@@ -86,7 +86,10 @@ function DrawerForm({ panel, active }: { panel: Panel; active: boolean }) {
       const res = await fetch(cfg.endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, phone, [cfg.messageKey]: message, auditUrl: window.location.href }),
+        body: JSON.stringify({
+          name, email, phone, [cfg.messageKey]: message, auditUrl: window.location.href,
+          attribution: (window as unknown as { RSNAttribution?: { get: (f: string) => unknown } }).RSNAttribution?.get(''),
+        }),
       });
       const data = (await res.json().catch(() => ({}))) as { ok?: boolean };
       if (!res.ok || data.ok === false) throw new Error('submit failed');

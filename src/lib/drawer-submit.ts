@@ -10,6 +10,7 @@
 import { NextResponse } from 'next/server';
 import { enforceMaxBody, enforceOriginAllowlist, enforceRateLimit, isValidEmail } from '@/lib/api-helpers';
 import { NOTIFY_TAGS, sendSlackNotification, triggerGHLWorkflow } from '@/lib/notifications';
+import { attributionNote, createWithAttribution, parseAttribution, updateLastTouch } from '@/lib/attribution';
 
 const PROPERTY_SLUG = 'storm-calculator';
 const GHL_BASE = 'https://services.leadconnectorhq.com';
@@ -110,12 +111,23 @@ export async function handleDrawerSubmit(request: Request, kind: DrawerKind): Pr
   }
 
   let contactId: string | null = null;
+  let existed = false;
   try {
     const parts = name.split(/\s+/);
-    const contactRes = await fetch(`${GHL_BASE}/contacts/`, {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${ghlToken}`, Version: version, 'Content-Type': 'application/json' },
-      body: JSON.stringify({
+    const headers = { Authorization: `Bearer ${ghlToken}`, Version: version, 'Content-Type': 'application/json' };
+    const attribution = parseAttribution(body.attribution, kind === 'support' ? 'support drawer' : 'recommend drawer', 'stormcalculator.razorsharpnetworks.com', pageUrl);
+    // Find first, create only if new: an existing contact keeps its name and
+    // phone and gets tags + last-touch attribution only. Ends a duplicate
+    // contact per submission.
+    const found = await fetch(
+      `${GHL_BASE}/contacts/search/duplicate?locationId=${encodeURIComponent(locationId)}&email=${encodeURIComponent(email)}`,
+      { headers, signal: AbortSignal.timeout(6000) },
+    );
+    const fj = (await found.json().catch(() => ({}))) as { contact?: { id?: string } | null };
+    contactId = fj?.contact?.id || null;
+    existed = !!contactId;
+    if (!contactId) {
+      const created = await createWithAttribution(GHL_BASE, headers, {
         locationId,
         firstName: parts[0] || 'Anonymous',
         lastName: parts.slice(1).join(' '),
@@ -124,18 +136,21 @@ export async function handleDrawerSubmit(request: Request, kind: DrawerKind): Pr
         source: cfg.source,
         tags: cfg.tags,
         customFields: [{ key: cfg.customFieldKey, field_value: message }],
-      }),
-      signal: AbortSignal.timeout(8000),
-    });
-    const data = (await contactRes.json().catch(() => ({}))) as { contact?: { id?: string } };
-    contactId = data?.contact?.id || null;
-
-    if (!contactRes.ok) {
-      console.warn(JSON.stringify({ event: 'ghl_contact_failed', route: cfg.route, status: contactRes.status }));
+      }, attribution);
+      contactId = created.id;
+      existed = created.existed;
+    }
+    if (!contactId) {
+      console.warn(JSON.stringify({ event: 'ghl_contact_failed', route: cfg.route }));
+    } else if (existed) {
+      await Promise.allSettled([
+        fetch(`${GHL_BASE}/contacts/${contactId}/tags`, { method: 'POST', headers, body: JSON.stringify({ tags: cfg.tags }), signal: AbortSignal.timeout(5000) }),
+        updateLastTouch(GHL_BASE, headers, contactId, attribution),
+      ]);
     }
 
     if (contactId) {
-      const note = [cfg.noteTitle, `Page: ${pageUrl || 'unknown'}`, '', message, '', `Submitted: ${submittedAt}`].join('\n');
+      const note = [cfg.noteTitle, `Page: ${pageUrl || 'unknown'}`, '', message, '', `Submitted: ${submittedAt}`, '', attributionNote(attribution, !existed)].join('\n');
       await Promise.allSettled([
         fetch(`${GHL_BASE}/contacts/${contactId}/notes`, {
           method: 'POST',
@@ -153,5 +168,5 @@ export async function handleDrawerSubmit(request: Request, kind: DrawerKind): Pr
   // Slack always fires, matching the portal, so a GHL outage never hides a request.
   await slack();
 
-  return NextResponse.json({ ok: true, contactId });
+  return NextResponse.json({ ok: true });
 }

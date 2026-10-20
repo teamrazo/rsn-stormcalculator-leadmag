@@ -52,7 +52,10 @@ export default function LeadCapture({ onSubmit, answers, result }: LeadCapturePr
       const res = await fetch('/api/submit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({
+          ...payload,
+          attribution: (window as unknown as { RSNAttribution?: { get: (f: string) => unknown } }).RSNAttribution?.get('storm calculator'),
+        }),
       });
       const data = await res.json();
       console.log('[storm-calc] Submission result:', data);

@@ -12,7 +12,7 @@ const GOOGLE_ADS = 'https://www.google.com https://*.doubleclick.net https://www
 const CSP = [
   "default-src 'self'",
   // blob: is required by ZoomInfo's zi-tag.js, which builds its loader as blob scripts.
-  `script-src 'self' 'unsafe-inline' blob:${isDev ? " 'unsafe-eval'" : ''} ${GTM_HOSTS} https://js.zi-scripts.com https://*.zoominfo.com https://*.clickagy.com https://www.googleadservices.com https://googleads.g.doubleclick.net`,
+  `script-src 'self' 'unsafe-inline' blob: https://partner.razorsharpnetworks.com${isDev ? " 'unsafe-eval'" : ''} ${GTM_HOSTS} https://js.zi-scripts.com https://*.zoominfo.com https://*.clickagy.com https://www.googleadservices.com https://googleads.g.doubleclick.net`,
   "style-src 'self' 'unsafe-inline'",
   // Images from any HTTPS host: ZoomInfo/Clickagy sync pixels with an open-ended
   // set of ad exchanges. Images cannot execute code; scripts stay allowlisted.

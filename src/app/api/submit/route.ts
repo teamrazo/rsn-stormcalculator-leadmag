@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { upsertStormContact, type StormCalculatorData } from "@/lib/ghl";
+import { parseAttribution } from "@/lib/attribution";
 
 export const dynamic = "force-dynamic";
 
@@ -118,6 +119,7 @@ export async function POST(req: NextRequest) {
           ],
           note,
           calculatorData,
+          attribution: parseAttribution(body?.attribution, 'storm calculator', 'stormcalculator.razorsharpnetworks.com'),
         });
 
         ghlContactId = result.contactId;
