@@ -1,0 +1,85 @@
+/* ===== RSN canonical: Side-tab drawers (Support + Recommend) + Back-to-top =====
+   Source of truth: gitlever-home/index.html (gitlever.ai). portal.gitlever.ai
+   carries the same pattern. Keep values in sync with that file; do not restyle
+   locally. Variables are scoped with an --rsn- prefix so they never collide
+   with this app's Tailwind theme. */
+
+:root {
+  --rsn-chalk: #F5F5F0;
+  --rsn-muted: #9A988F;
+  --rsn-dim: #7C7A73;
+  --rsn-line: rgba(245, 245, 240, .10);
+  --rsn-line2: rgba(245, 245, 240, .18);
+  --rsn-purple-tint: #D48AE8;
+  --rsn-sans: 'Inter', system-ui, sans-serif;
+  --rsn-serif: var(--font-rsn-serif, 'Playfair Display'), Georgia, serif;
+  --rsn-mono: var(--font-rsn-mono, 'IBM Plex Mono'), monospace;
+}
+
+.side-tabs{position:fixed;right:0;top:50%;transform:translateY(-50%);z-index:60;display:flex;flex-direction:column;gap:6px;transition:transform .3s ease;will-change:transform}
+.side-tabs.drawer-open{transform:translateY(-50%) translateX(-360px)}
+@media(max-width:520px){.side-tabs.drawer-open{transform:translateY(-50%) translateX(-90vw)}}
+.side-tab{writing-mode:vertical-rl;text-orientation:mixed;width:44px;height:128px;background:linear-gradient(135deg,#A83AC4,#5B21B6);color:#F8F5F0;border:1px solid rgba(255,255,255,.15);border-right:none;border-radius:8px 0 0 8px;font-family:var(--rsn-sans);font-size:12.5px;font-weight:500;letter-spacing:.08em;cursor:pointer;padding:14px 6px;transition:transform .2s ease,box-shadow .3s ease;box-shadow:0 4px 18px rgba(168,58,196,.32)}
+.side-tab:hover{transform:translateX(-3px);box-shadow:0 6px 24px rgba(168,58,196,.48)}
+.side-tab:focus-visible{outline:2px solid #D48AE8;outline-offset:-1px}
+@media(max-width:520px){.side-tab{height:112px;font-size:11.5px;width:40px;padding:12px 5px}}
+
+.drawer-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.55);backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px);z-index:65;opacity:0;pointer-events:none;transition:opacity .25s ease}
+.drawer-backdrop.open{opacity:1;pointer-events:auto}
+
+.drawer{position:fixed;top:0;right:0;height:100%;width:min(360px,90vw);background:#0D0D10;border-left:.5px solid var(--rsn-line2);z-index:70;transform:translateX(100%);transition:transform .3s ease;display:flex;flex-direction:column;box-shadow:-10px 0 40px rgba(0,0,0,.6)}
+.drawer.open{transform:translateX(0)}
+.drawer-head{display:flex;align-items:center;justify-content:space-between;padding:20px 24px;border-bottom:.5px solid var(--rsn-line)}
+.drawer-title{font-family:var(--rsn-serif);font-weight:600;font-size:18px;color:var(--rsn-chalk);margin:0}
+.drawer-close{background:none;border:none;color:var(--rsn-muted);font-size:28px;line-height:1;cursor:pointer;padding:4px 10px;border-radius:6px;transition:color .15s,background .15s}
+.drawer-close:hover{color:var(--rsn-chalk);background:rgba(255,255,255,.05)}
+.drawer-close:focus-visible{outline:2px solid #D48AE8;outline-offset:2px}
+.drawer-body{flex:1;padding:24px;overflow-y:auto;-webkit-overflow-scrolling:touch}
+
+.drawer-form{display:none;flex-direction:column;gap:14px}
+.drawer-form.active{display:flex}
+.drawer-form .field{display:flex;flex-direction:column;gap:6px}
+.drawer-form label{font-size:11.5px;color:var(--rsn-muted);font-family:var(--rsn-mono);letter-spacing:.06em;text-transform:uppercase}
+.drawer-form input,.drawer-form textarea{width:100%;padding:11px 13px;background:rgba(255,255,255,.04);border:.5px solid var(--rsn-line2);border-radius:8px;color:var(--rsn-chalk);font-family:var(--rsn-sans);font-size:16px;line-height:1.4;transition:border-color .15s,background .15s;box-sizing:border-box}
+.drawer-form input:focus,.drawer-form textarea:focus{outline:none;border-color:var(--rsn-purple-tint);background:rgba(255,255,255,.06)}
+.drawer-form textarea{resize:vertical;min-height:96px}
+.drawer-form .submit{margin-top:6px;padding:13px 22px;font-family:var(--rsn-sans);font-weight:500;font-size:14.5px;color:#F8F5F0;background:linear-gradient(135deg,#A83AC4,#5B21B6);border:none;border-radius:8px;cursor:pointer;transition:transform .15s,box-shadow .3s,opacity .15s}
+.drawer-form .submit:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 8px 24px rgba(168,58,196,.4)}
+.drawer-form .submit:disabled{opacity:.5;cursor:not-allowed}
+.drawer-form .submit:focus-visible{outline:2px solid #D48AE8;outline-offset:2px}
+.drawer-form .error{color:#F09595;font-size:13px;background:rgba(229,75,74,.1);border:.5px solid rgba(229,75,74,.3);border-radius:6px;padding:9px 12px;display:none}
+.drawer-form .error.show{display:block}
+.drawer-form .help{font-size:11.5px;color:var(--rsn-dim);margin:2px 0 0}
+
+.drawer-success{display:none;text-align:center;padding:36px 12px}
+.drawer-success.show{display:block}
+.drawer-success .icon{display:inline-flex;width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#A83AC4,#5B21B6);align-items:center;justify-content:center;color:#fff;font-size:26px;margin:0 auto 18px;box-shadow:0 6px 22px rgba(168,58,196,.35)}
+.drawer-success h3{font-family:var(--rsn-serif);font-weight:600;font-size:18px;color:var(--rsn-chalk);margin:0 0 8px}
+.drawer-success p{font-size:13.5px;color:#CFCEC6;line-height:1.55;margin:0}
+
+/* Back-to-top: appears past 400px scroll, right edge, below side-tabs */
+.back-to-top{position:fixed;bottom:17%;right:0;z-index:55;width:40px;height:48px;border-radius:8px 0 0 8px;background:rgba(168,58,196,.30);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);color:#fff;border:1px solid rgba(255,255,255,.15);border-right:none;box-shadow:0 0 16px rgba(168,58,196,.30);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:transform .3s ease,background .2s ease,box-shadow .3s ease;transform:translateX(100%);pointer-events:none}
+.back-to-top.visible{transform:translateX(0);pointer-events:auto}
+.back-to-top:hover{background:rgba(168,58,196,.45);box-shadow:0 0 22px rgba(168,58,196,.5)}
+.back-to-top:focus-visible{outline:2px solid #D48AE8;outline-offset:2px}
+.back-to-top svg{width:16px;height:16px;display:block}
+
+@media (prefers-reduced-motion: reduce){
+  .drawer,.drawer-backdrop,.side-tabs,.back-to-top{transition:none !important}
+}
+
+/* ===== Standard Footer: matches portal.gitlever.ai (lever-portal dashboard.html) ===== */
+.rsn-footer{border-top:1px solid rgba(168,58,196,.12);background:rgba(20,20,22,.5);padding:24px 0;width:100%;display:block;clear:both;margin-top:96px}
+.rsn-footer .foot-stack{display:flex;flex-direction:column;align-items:center;gap:10px;max-width:1200px;margin:0 auto;padding:0 20px;text-align:center}
+.rsn-footer .foot-logo{height:28px;width:auto;object-fit:contain}
+.rsn-footer .foot-links{display:flex;align-items:center;gap:14px;flex-wrap:wrap;justify-content:center}
+.rsn-footer .foot-links a{font-size:13px;color:var(--rsn-muted);transition:color .15s}
+.rsn-footer .foot-links a:hover{color:#A83AC4}
+.rsn-footer .foot-built{display:flex;align-items:center;gap:4px;font-size:13px;color:var(--rsn-muted);flex-wrap:wrap;justify-content:center}
+.rsn-footer .foot-built a{color:#D48AE8;transition:color .15s}
+.rsn-footer .foot-built a:hover{text-decoration:underline}
+.rsn-footer .foot-copy{font-size:11px;color:var(--rsn-dim);line-height:1.3}
+.rsn-footer .foot-legal-links{display:flex;flex-wrap:wrap;justify-content:center;gap:8px 12px;font-size:11px;color:var(--rsn-dim)}
+.rsn-footer .foot-legal-links a{color:var(--rsn-dim);transition:color .15s}
+.rsn-footer .foot-legal-links a:hover{color:#A83AC4}
+@media(max-width:520px){.rsn-footer{padding:12px 0}.rsn-footer .foot-stack{gap:5px}}

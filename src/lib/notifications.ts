@@ -15,7 +15,8 @@ export interface SlackPayload {
 }
 
 export async function sendSlackNotification(payload: SlackPayload): Promise<number> {
-  const webhookUrl = process.env.SLACK_WEBHOOK_URL?.trim();
+  // SLACK_NOTIFICATION_WEBHOOK is the var the calculator submit route already uses.
+  const webhookUrl = (process.env.SLACK_WEBHOOK_URL || process.env.SLACK_NOTIFICATION_WEBHOOK)?.trim();
   if (!webhookUrl) return 0;
   const lines: string[] = [`*${sanitizeForLog(payload.title, 200)}*`, ""];
   for (const [label, raw] of payload.fields) {

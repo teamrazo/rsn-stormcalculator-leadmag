@@ -1,7 +1,8 @@
 import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
+import { IBM_Plex_Mono, Inter, Playfair_Display } from 'next/font/google';
 import Script from 'next/script';
 import './globals.css';
+import './side-tabs.css';
 import { BackToTop } from '@/components/BackToTop';
 import { Footer } from '@/components/Footer';
 import SideTabs from '@/components/SideTabs';
@@ -13,6 +14,10 @@ const inter = Inter({
   weight: ['300', '400', '500', '600', '700', '800'],
   display: 'swap',
 });
+
+// Drawer title and label faces, matching gitlever.ai. Used only by side-tabs.css.
+const rsnSerif = Playfair_Display({ subsets: ['latin'], weight: ['600'], display: 'swap', variable: '--font-rsn-serif', preload: false });
+const rsnMono = IBM_Plex_Mono({ subsets: ['latin'], weight: ['400'], display: 'swap', variable: '--font-rsn-mono', preload: false });
 
 const SITE_URL = 'https://stormcalculator.razorsharpnetworks.com';
 
@@ -230,7 +235,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={inter.className}>
+    <html lang="en" className={`${inter.className} ${rsnSerif.variable} ${rsnMono.variable}`}>
       <head>
         <meta name="theme-color" content="#0A0A0F" />
         <script

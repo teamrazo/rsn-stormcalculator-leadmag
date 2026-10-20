@@ -1,487 +1,202 @@
 'use client';
 
-import { useState } from 'react';
-import { X } from 'lucide-react';
+// RSN canonical side-tab drawers (Support + Recommend).
+// Markup, copy and behavior match gitlever.ai and portal.gitlever.ai.
+// Styles live in src/app/side-tabs.css. Do not restyle here.
 
-function isValidEmail(value: string): boolean {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
-}
+import { useCallback, useEffect, useRef, useState } from 'react';
 
-/** Normalizes a phone number to E.164 (e.g. +15551234567). Returns null if it is not a valid number. */
-function normalizePhone(value: string): string | null {
-  const trimmed = value.trim();
-  const digits = trimmed.replace(/\D/g, '');
-  if (digits.length === 10) return `+1${digits}`;
-  if (digits.length === 11 && digits.startsWith('1')) return `+${digits}`;
-  if (trimmed.startsWith('+') && digits.length >= 8 && digits.length <= 15) return `+${digits}`;
+type Panel = 'support' | 'recommend';
+
+const PANELS: Record<Panel, {
+  title: string;
+  endpoint: string;
+  messageKey: 'message' | 'recommendation';
+  messageLabel: string;
+  messageHelp: string;
+  rows: number;
+  submitLabel: string;
+  successTitle: string;
+  successBody: string;
+}> = {
+  support: {
+    title: 'Support',
+    endpoint: '/api/support-ticket',
+    messageKey: 'message',
+    messageLabel: 'How can we help?',
+    messageHelp: 'A member of our team will follow up via email or phone.',
+    rows: 5,
+    submitLabel: 'Submit support request',
+    successTitle: 'Request submitted',
+    successBody: 'A member of our team will follow up with you shortly. Thank you for reaching out.',
+  },
+  recommend: {
+    title: 'Recommend a feature',
+    endpoint: '/api/feature-recommendation',
+    messageKey: 'recommendation',
+    messageLabel: 'What would make this tool more valuable to you?',
+    messageHelp: 'Feature ideas, integrations, anything that would unlock more leverage for your business.',
+    rows: 6,
+    submitLabel: 'Submit recommendation',
+    successTitle: 'Thanks for the feedback',
+    successBody: 'Our AI assistant will follow up with you soon.',
+  },
+};
+
+const FAILURE = "We couldn't send that. Please email support@razorsharpnetworks.com.";
+
+function normalizePhone(input: string): string | null {
+  const digits = input.replace(/\D/g, '');
+  if (digits.length === 10) return '+1' + digits;
+  if (digits.length === 11 && digits.charAt(0) === '1') return '+' + digits;
   return null;
 }
-
-interface SideTabsProps {
-  auditUrl?: string;
+function isValidEmail(s: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s.trim());
 }
 
-type Panel = 'support' | 'recommend' | null;
+function DrawerForm({ panel, active }: { panel: Panel; active: boolean }) {
+  const cfg = PANELS[panel];
+  const [error, setError] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [done, setDone] = useState(false);
 
-export default function SideTabs({ auditUrl }: SideTabsProps) {
-  const [activePanel, setActivePanel] = useState<Panel>(null);
+  // Reset state each time the panel is reopened, matching the canonical script.
+  useEffect(() => {
+    if (active) { setError(''); setBusy(false); setDone(false); }
+  }, [active]);
 
-  // Support form state
-  const [supportName, setSupportName] = useState('');
-  const [supportEmail, setSupportEmail] = useState('');
-  const [supportPhone, setSupportPhone] = useState('');
-  const [supportMessage, setSupportMessage] = useState('');
-  const [supportLoading, setSupportLoading] = useState(false);
-  const [supportSuccess, setSupportSuccess] = useState(false);
-  const [supportError, setSupportError] = useState<string | null>(null);
-
-  // Recommend form state
-  const [recommendName, setRecommendName] = useState('');
-  const [recommendEmail, setRecommendEmail] = useState('');
-  const [recommendPhone, setRecommendPhone] = useState('');
-  const [recommendation, setRecommendation] = useState('');
-  const [recommendLoading, setRecommendLoading] = useState(false);
-  const [recommendSuccess, setRecommendSuccess] = useState(false);
-  const [recommendError, setRecommendError] = useState<string | null>(null);
-
-  // Hover states
-  const [supportTabHover, setSupportTabHover] = useState(false);
-  const [recommendTabHover, setRecommendTabHover] = useState(false);
-  const [supportCloseHover, setSupportCloseHover] = useState(false);
-  const [supportSubmitHover, setSupportSubmitHover] = useState(false);
-  const [recommendCloseHover, setRecommendCloseHover] = useState(false);
-  const [recommendSubmitHover, setRecommendSubmitHover] = useState(false);
-
-  const togglePanel = (panel: Panel) => {
-    setActivePanel(prev => (prev === panel ? null : panel));
-  };
-
-  const handleSupportSubmit = async (e: React.FormEvent) => {
+  async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    setSupportError(null);
+    setError('');
+    const form = e.currentTarget;
+    const fd = new FormData(form);
+    const name = String(fd.get('name') || '').trim();
+    const email = String(fd.get('email') || '').trim();
+    const phoneRaw = String(fd.get('phone') || '').trim();
+    const message = String(fd.get(cfg.messageKey) || '').trim();
 
-    if (!isValidEmail(supportEmail)) {
-      setSupportError('Please enter a valid email address.');
-      return;
-    }
-    const supportPhoneE164 = normalizePhone(supportPhone);
-    if (!supportPhoneE164) {
-      setSupportError('Please enter a valid phone number, e.g. (555) 123-4567.');
-      return;
-    }
+    if (!name || !email || !phoneRaw || !message) return setError('All fields are required.');
+    if (!isValidEmail(email)) return setError('Please enter a valid email address.');
+    const phone = normalizePhone(phoneRaw);
+    if (!phone) return setError('Please enter a valid US phone number, e.g. (555) 123-4567.');
 
-    setSupportLoading(true);
+    setBusy(true);
     try {
-      const res = await fetch('/api/support-ticket', {
+      const res = await fetch(cfg.endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: supportName,
-          email: supportEmail.trim(),
-          phone: supportPhoneE164,
-          message: supportMessage,
-          auditUrl,
-        }),
+        body: JSON.stringify({ name, email, phone, [cfg.messageKey]: message, auditUrl: window.location.href }),
       });
-      const data = await res.json() as { ok: boolean };
-      if (data.ok === false) {
-        setSupportError('There was an issue saving your info. Please email support@razorsharpnetworks.com');
-        return;
-      }
-      setSupportSuccess(true);
-      window.open('https://support.razorsharpnetworks.com', '_blank', 'noopener noreferrer');
-    } catch (err) {
-      console.error('Support submit error:', err);
-      setSupportError('There was an issue saving your info. Please email support@razorsharpnetworks.com');
+      const data = (await res.json().catch(() => ({}))) as { ok?: boolean };
+      if (!res.ok || data.ok === false) throw new Error('submit failed');
+      form.reset();
+      setDone(true);
+    } catch {
+      setError(FAILURE);
     } finally {
-      setSupportLoading(false);
+      setBusy(false);
     }
-  };
+  }
 
-  const handleRecommendSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setRecommendError(null);
+  const id = (f: string) => `${panel}-${f}`;
+  return (
+    <>
+      <form
+        className={`drawer-form${active && !done ? ' active' : ''}`}
+        data-panel={panel}
+        noValidate
+        onSubmit={onSubmit}
+      >
+        <div className={`error${error ? ' show' : ''}`} role="alert" aria-live="polite">{error}</div>
+        <div className="field">
+          <label htmlFor={id('name')}>Your name</label>
+          <input id={id('name')} name="name" type="text" autoComplete="name" required />
+        </div>
+        <div className="field">
+          <label htmlFor={id('email')}>Email</label>
+          <input id={id('email')} name="email" type="email" autoComplete="email" required />
+        </div>
+        <div className="field">
+          <label htmlFor={id('phone')}>Phone</label>
+          <input id={id('phone')} name="phone" type="tel" autoComplete="tel" placeholder="(555) 123-4567" required />
+        </div>
+        <div className="field">
+          <label htmlFor={id('message')}>{cfg.messageLabel}</label>
+          <textarea id={id('message')} name={cfg.messageKey} rows={cfg.rows} required />
+          <p className="help">{cfg.messageHelp}</p>
+        </div>
+        <button type="submit" className="submit" disabled={busy}>
+          {busy ? 'Sending…' : cfg.submitLabel}
+        </button>
+      </form>
+      <div className={`drawer-success${active && done ? ' show' : ''}`} role="status" aria-live="polite">
+        <div className="icon" aria-hidden="true">&#10003;</div>
+        <h3>{cfg.successTitle}</h3>
+        <p>{cfg.successBody}</p>
+      </div>
+    </>
+  );
+}
 
-    if (!isValidEmail(recommendEmail)) {
-      setRecommendError('Please enter a valid email address.');
-      return;
-    }
-    const recommendPhoneE164 = normalizePhone(recommendPhone);
-    if (!recommendPhoneE164) {
-      setRecommendError('Please enter a valid phone number, e.g. (555) 123-4567.');
-      return;
-    }
+export default function SideTabs() {
+  const [panel, setPanel] = useState<Panel | null>(null);
+  const [lastPanel, setLastPanel] = useState<Panel>('support');
+  const drawerRef = useRef<HTMLElement>(null);
+  const openerRef = useRef<HTMLElement | null>(null);
 
-    setRecommendLoading(true);
-    try {
-      const res = await fetch('/api/feature-recommendation', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: recommendName,
-          email: recommendEmail.trim(),
-          phone: recommendPhoneE164,
-          recommendation,
-          auditUrl,
-        }),
-      });
-      const data = await res.json() as { ok: boolean };
-      if (data.ok === false) {
-        setRecommendError('There was an issue saving your info. Please email support@razorsharpnetworks.com');
-        return;
-      }
-      setRecommendSuccess(true);
-    } catch (err) {
-      console.error('Recommend submit error:', err);
-      setRecommendError('There was an issue saving your info. Please email support@razorsharpnetworks.com');
-    } finally {
-      setRecommendLoading(false);
-    }
-  };
+  const open = useCallback((p: Panel, opener: HTMLElement) => {
+    openerRef.current = opener;
+    setLastPanel(p);
+    setPanel(p);
+  }, []);
+  const close = useCallback(() => {
+    setPanel(null);
+    openerRef.current?.focus();
+  }, []);
 
-  const supportValid =
-    supportName.trim() !== '' &&
-    supportEmail.trim() !== '' &&
-    supportPhone.trim() !== '' &&
-    supportMessage.trim() !== '';
+  useEffect(() => {
+    if (!panel) return;
+    const t = window.setTimeout(() => {
+      drawerRef.current?.querySelector<HTMLInputElement>('.drawer-form.active input')?.focus();
+    }, 320);
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') close(); };
+    document.addEventListener('keydown', onKey);
+    return () => { window.clearTimeout(t); document.removeEventListener('keydown', onKey); };
+  }, [panel, close]);
 
-  const recommendValid =
-    recommendName.trim() !== '' &&
-    recommendEmail.trim() !== '' &&
-    recommendPhone.trim() !== '' &&
-    recommendation.trim() !== '';
-
-  const inputStyle: React.CSSProperties = {
-    width: '100%',
-    backgroundColor: '#0E0E1A',
-    border: '1px solid rgba(139,63,217,0.3)',
-    borderRadius: 4,
-    padding: '8px 12px',
-    fontSize: 14,
-    color: '#F0F0F5',
-    outline: 'none',
-    boxSizing: 'border-box',
-  };
-
-  const labelStyle: React.CSSProperties = {
-    display: 'block',
-    fontSize: 11,
-    fontWeight: 600,
-    color: '#87878E',
-    textTransform: 'uppercase',
-    letterSpacing: '0.05em',
-    marginBottom: 4,
-  };
+  const isOpen = panel !== null;
+  const shown = panel ?? lastPanel;
 
   return (
     <>
-      {/* Tab buttons — fixed on right edge, vertically centered */}
-      <div
-        style={{
-          position: 'fixed',
-          right: activePanel ? 360 : 0,
-          top: '50%',
-          transform: 'translateY(-50%)',
-          zIndex: 50,
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 8,
-          transition: 'right 0.3s ease',
-        }}
-      >
-        <button
-          onClick={() => togglePanel('support')}
-          aria-label="Open Support panel"
-          onMouseEnter={() => setSupportTabHover(true)}
-          onMouseLeave={() => setSupportTabHover(false)}
-          style={{
-            writingMode: 'vertical-rl',
-            width: 42,
-            height: 120,
-            paddingTop: 12,
-            paddingBottom: 12,
-            backgroundColor: supportTabHover ? '#8B3FD9' : '#A83AC4',
-            color: 'white',
-            fontWeight: 600,
-            fontSize: 12,
-            letterSpacing: '0.05em',
-            borderRadius: '6px 0 0 6px',
-            boxShadow: '0 4px 6px rgba(0,0,0,0.3)',
-            cursor: 'pointer',
-            border: 'none',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            transition: 'background-color 0.15s ease',
-          }}
-        >
+      <div className={`side-tabs${isOpen ? ' drawer-open' : ''}`}>
+        <button type="button" className="side-tab" aria-label="Open Support panel" onClick={e => open('support', e.currentTarget)}>
           Support
         </button>
-        <button
-          onClick={() => togglePanel('recommend')}
-          aria-label="Open Recommend panel"
-          onMouseEnter={() => setRecommendTabHover(true)}
-          onMouseLeave={() => setRecommendTabHover(false)}
-          style={{
-            writingMode: 'vertical-rl',
-            width: 42,
-            height: 120,
-            paddingTop: 12,
-            paddingBottom: 12,
-            backgroundColor: recommendTabHover ? '#8B3FD9' : '#A83AC4',
-            color: 'white',
-            fontWeight: 600,
-            fontSize: 12,
-            letterSpacing: '0.05em',
-            borderRadius: '6px 0 0 6px',
-            boxShadow: '0 4px 6px rgba(0,0,0,0.3)',
-            cursor: 'pointer',
-            border: 'none',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            transition: 'background-color 0.15s ease',
-          }}
-        >
+        <button type="button" className="side-tab" aria-label="Open Recommend a feature panel" onClick={e => open('recommend', e.currentTarget)}>
           Recommend
         </button>
       </div>
-
-      {/* Sliding panel */}
-      <div
-        style={{
-          position: 'fixed',
-          top: 0,
-          right: 0,
-          height: '100%',
-          width: 360,
-          zIndex: 40,
-          display: 'flex',
-          flexDirection: 'column',
-          backgroundColor: '#101018',
-          borderLeft: '1px solid rgba(139,63,217,0.3)',
-          boxShadow: '0 25px 50px rgba(0,0,0,0.5)',
-          overflowY: 'auto',
-          transform: activePanel ? 'translateX(0)' : 'translateX(100%)',
-          transition: 'transform 0.3s ease',
-        }}
+      <div className={`drawer-backdrop${isOpen ? ' open' : ''}`} aria-hidden="true" onClick={close} />
+      <aside
+        ref={drawerRef}
+        className={`drawer${isOpen ? ' open' : ''}`}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="drawerTitle"
+        aria-hidden={!isOpen}
+        inert={!isOpen}
       >
-        {activePanel === 'support' && (
-          <>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 24px', borderBottom: '1px solid rgba(139,63,217,0.3)' }}>
-              <h2 style={{ fontSize: 18, fontWeight: 700, color: '#F0F0F5', margin: 0 }}>Support</h2>
-              <button
-                onClick={() => setActivePanel(null)}
-                aria-label="Close panel"
-                onMouseEnter={() => setSupportCloseHover(true)}
-                onMouseLeave={() => setSupportCloseHover(false)}
-                style={{
-                  color: supportCloseHover ? '#F0F0F5' : '#87878E',
-                  background: 'none',
-                  border: 'none',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  transition: 'color 0.15s ease',
-                  padding: 0,
-                }}
-              >
-                <X style={{ width: 20, height: 20 }} />
-              </button>
-            </div>
-            <div style={{ flex: 1, padding: '24px' }}>
-              {supportSuccess ? (
-                <div style={{ textAlign: 'center', paddingTop: 32, paddingBottom: 32 }}>
-                  <div style={{ fontSize: 36, marginBottom: 16 }}>✅</div>
-                  <p style={{ color: '#F0F0F5', fontWeight: 600, marginBottom: 8 }}>Request submitted!</p>
-                  <p style={{ fontSize: 14, color: '#87878E', margin: 0 }}>Opening support portal in a new tab…</p>
-                </div>
-              ) : (
-                <form onSubmit={handleSupportSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                  <div>
-                    <label style={labelStyle}>Name <span style={{ color: '#f87171' }}>*</span></label>
-                    <input
-                      style={inputStyle}
-                      placeholder="Your name"
-                      required
-                      value={supportName}
-                      onChange={e => setSupportName(e.target.value)}
-                    />
-                  </div>
-                  <div>
-                    <label style={labelStyle}>Email <span style={{ color: '#f87171' }}>*</span></label>
-                    <input
-                      type="email"
-                      style={inputStyle}
-                      placeholder="you@example.com"
-                      required
-                      value={supportEmail}
-                      onChange={e => setSupportEmail(e.target.value)}
-                    />
-                  </div>
-                  <div>
-                    <label style={labelStyle}>Phone <span style={{ color: '#f87171' }}>*</span></label>
-                    <input
-                      type="tel"
-                      style={inputStyle}
-                      placeholder="(555) 123-4567"
-                      required
-                      value={supportPhone}
-                      onChange={e => setSupportPhone(e.target.value)}
-                    />
-                  </div>
-                  <div>
-                    <label style={labelStyle}>Message <span style={{ color: '#f87171' }}>*</span></label>
-                    <textarea
-                      style={{ ...inputStyle, resize: 'none' }}
-                      rows={5}
-                      placeholder="Describe your issue or question…"
-                      required
-                      value={supportMessage}
-                      onChange={e => setSupportMessage(e.target.value)}
-                    />
-                  </div>
-                  {supportError && (
-                    <p style={{ fontSize: 12, color: '#f87171', textAlign: 'center', margin: 0 }}>{supportError}</p>
-                  )}
-                  <button
-                    type="submit"
-                    disabled={supportLoading || !supportValid}
-                    onMouseEnter={() => setSupportSubmitHover(true)}
-                    onMouseLeave={() => setSupportSubmitHover(false)}
-                    style={{
-                      width: '100%',
-                      backgroundColor: supportSubmitHover && !supportLoading && supportValid ? '#8B3FD9' : '#A83AC4',
-                      opacity: supportLoading || !supportValid ? 0.5 : 1,
-                      cursor: supportLoading || !supportValid ? 'not-allowed' : 'pointer',
-                      color: 'white',
-                      fontWeight: 700,
-                      padding: '12px',
-                      borderRadius: 8,
-                      fontSize: 14,
-                      border: 'none',
-                      transition: 'background-color 0.15s ease',
-                    }}
-                  >
-                    {supportLoading ? 'Submitting…' : 'Submit & Open Support Portal'}
-                  </button>
-                </form>
-              )}
-            </div>
-          </>
-        )}
-
-        {activePanel === 'recommend' && (
-          <>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 24px', borderBottom: '1px solid rgba(139,63,217,0.3)' }}>
-              <h2 style={{ fontSize: 18, fontWeight: 700, color: '#F0F0F5', margin: 0 }}>Recommend a Feature</h2>
-              <button
-                onClick={() => setActivePanel(null)}
-                aria-label="Close panel"
-                onMouseEnter={() => setRecommendCloseHover(true)}
-                onMouseLeave={() => setRecommendCloseHover(false)}
-                style={{
-                  color: recommendCloseHover ? '#F0F0F5' : '#87878E',
-                  background: 'none',
-                  border: 'none',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  transition: 'color 0.15s ease',
-                  padding: 0,
-                }}
-              >
-                <X style={{ width: 20, height: 20 }} />
-              </button>
-            </div>
-            <div style={{ flex: 1, padding: '24px' }}>
-              {recommendSuccess ? (
-                <div style={{ textAlign: 'center', paddingTop: 32, paddingBottom: 32 }}>
-                  <div style={{ fontSize: 36, marginBottom: 16 }}>🙏</div>
-                  <p style={{ color: '#F0F0F5', fontWeight: 600, marginBottom: 8 }}>Thanks for the feedback!</p>
-                  <p style={{ fontSize: 14, color: '#87878E', margin: 0 }}>Our AI assistant will follow up with you soon.</p>
-                </div>
-              ) : (
-                <form onSubmit={handleRecommendSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                  <div>
-                    <label style={labelStyle}>Name <span style={{ color: '#f87171' }}>*</span></label>
-                    <input
-                      style={inputStyle}
-                      placeholder="Your name"
-                      required
-                      value={recommendName}
-                      onChange={e => setRecommendName(e.target.value)}
-                    />
-                  </div>
-                  <div>
-                    <label style={labelStyle}>Email <span style={{ color: '#f87171' }}>*</span></label>
-                    <input
-                      type="email"
-                      style={inputStyle}
-                      placeholder="you@example.com"
-                      required
-                      value={recommendEmail}
-                      onChange={e => setRecommendEmail(e.target.value)}
-                    />
-                  </div>
-                  <div>
-                    <label style={labelStyle}>Phone <span style={{ color: '#f87171' }}>*</span></label>
-                    <input
-                      type="tel"
-                      style={inputStyle}
-                      placeholder="(555) 123-4567"
-                      required
-                      value={recommendPhone}
-                      onChange={e => setRecommendPhone(e.target.value)}
-                    />
-                  </div>
-                  <div>
-                    <label style={labelStyle}>Feature Request <span style={{ color: '#f87171' }}>*</span></label>
-                    <textarea
-                      style={{ ...inputStyle, resize: 'none' }}
-                      rows={6}
-                      placeholder="What feature or improvement would make this tool more valuable to you?"
-                      required
-                      value={recommendation}
-                      onChange={e => setRecommendation(e.target.value)}
-                    />
-                  </div>
-                  {recommendError && (
-                    <p style={{ fontSize: 12, color: '#f87171', textAlign: 'center', margin: 0 }}>{recommendError}</p>
-                  )}
-                  <button
-                    type="submit"
-                    disabled={recommendLoading || !recommendValid}
-                    onMouseEnter={() => setRecommendSubmitHover(true)}
-                    onMouseLeave={() => setRecommendSubmitHover(false)}
-                    style={{
-                      width: '100%',
-                      backgroundColor: recommendSubmitHover && !recommendLoading && recommendValid ? '#8B3FD9' : '#A83AC4',
-                      opacity: recommendLoading || !recommendValid ? 0.5 : 1,
-                      cursor: recommendLoading || !recommendValid ? 'not-allowed' : 'pointer',
-                      color: 'white',
-                      fontWeight: 700,
-                      padding: '12px',
-                      borderRadius: 8,
-                      fontSize: 14,
-                      border: 'none',
-                      transition: 'background-color 0.15s ease',
-                    }}
-                  >
-                    {recommendLoading ? 'Submitting…' : 'Submit Recommendation'}
-                  </button>
-                </form>
-              )}
-            </div>
-          </>
-        )}
-      </div>
-
-      {/* Backdrop when panel is open */}
-      {activePanel && (
-        <div
-          style={{ position: 'fixed', inset: 0, zIndex: 30, backgroundColor: 'rgba(0,0,0,0.2)' }}
-          onClick={() => setActivePanel(null)}
-        />
-      )}
+        <header className="drawer-head">
+          <h2 className="drawer-title" id="drawerTitle">{PANELS[shown].title}</h2>
+          <button type="button" className="drawer-close" aria-label="Close panel" onClick={close}>&times;</button>
+        </header>
+        <div className="drawer-body">
+          <DrawerForm panel="support" active={panel === 'support'} />
+          <DrawerForm panel="recommend" active={panel === 'recommend'} />
+        </div>
+      </aside>
     </>
   );
 }
