@@ -3,7 +3,7 @@ import type { NextConfig } from "next";
 // Content-Security-Policy. Third-party code is limited to Google Tag Manager
 // and the tags the GTM-TMHF7F container loads today, found by testing:
 // Google Analytics, Google Ads conversion (google.com/ccm, doubleclick) and
-// ZoomInfo (zi-scripts.com, zoominfo.com). 'unsafe-inline' is needed for
+// ZoomInfo (zi-scripts.com, zoominfo.com, and its Clickagy data tag). 'unsafe-inline' is needed for
 // the GTM bootstrap and Next.js inline JSON-LD; it does not open other origins.
 // If a new GTM tag loads another vendor, add that origin here or it is blocked.
 const isDev = process.env.NODE_ENV !== 'production';
@@ -12,11 +12,11 @@ const GOOGLE_ADS = 'https://www.google.com https://*.doubleclick.net https://www
 const CSP = [
   "default-src 'self'",
   // blob: is required by ZoomInfo's zi-tag.js, which builds its loader as blob scripts.
-  `script-src 'self' 'unsafe-inline' blob:${isDev ? " 'unsafe-eval'" : ''} ${GTM_HOSTS} https://js.zi-scripts.com https://*.zoominfo.com https://www.googleadservices.com https://googleads.g.doubleclick.net`,
+  `script-src 'self' 'unsafe-inline' blob:${isDev ? " 'unsafe-eval'" : ''} ${GTM_HOSTS} https://js.zi-scripts.com https://*.zoominfo.com https://*.clickagy.com https://www.googleadservices.com https://googleads.g.doubleclick.net`,
   "style-src 'self' 'unsafe-inline'",
-  `img-src 'self' data: blob: ${GTM_HOSTS} ${GOOGLE_ADS} https://*.zoominfo.com`,
+  `img-src 'self' data: blob: ${GTM_HOSTS} ${GOOGLE_ADS} https://*.zoominfo.com https://*.clickagy.com`,
   "font-src 'self' data:",
-  `connect-src 'self' ${GTM_HOSTS} ${GOOGLE_ADS} https://js.zi-scripts.com https://*.zoominfo.com`,
+  `connect-src 'self' ${GTM_HOSTS} ${GOOGLE_ADS} https://js.zi-scripts.com https://*.zoominfo.com https://*.clickagy.com`,
   "frame-src https://www.googletagmanager.com https://td.doubleclick.net https://*.zoominfo.com",
   "worker-src 'self' blob:",
   "object-src 'none'",
