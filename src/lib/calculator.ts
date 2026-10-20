@@ -83,13 +83,11 @@ export function calculateResults(answers: Answers): CalculationResult {
   const baseGap = monthly_leads * avg_ticket * closeRateGap * 12;
 
   // Penalties from follow-up speed, automation, tracking
-  const speedPenalty = FOLLOW_UP_SPEED_PENALTY[follow_up_speed] || 0.10;
-  const autoPenalty = AUTOMATION_PENALTY[automation] || 0.10;
-  const trackPenalty = TRACKING_PENALTY[tracking] || 0.05;
-
-  // Total potential revenue at benchmark
-  const potentialMonthly = monthly_leads * avg_ticket * INDUSTRY_BENCHMARK_CLOSE_RATE;
-  const potentialAnnual = potentialMonthly * 12;
+  // `??`, not `||`: a best-case answer has a penalty of 0, and `0 || 0.10`
+  // silently charged it the fallback. Fallbacks apply only to unknown answers.
+  const speedPenalty = FOLLOW_UP_SPEED_PENALTY[follow_up_speed] ?? 0.10;
+  const autoPenalty = AUTOMATION_PENALTY[automation] ?? 0.10;
+  const trackPenalty = TRACKING_PENALTY[tracking] ?? 0.05;
 
   // Penalty-based additional gap (applied to their current revenue)
   const currentMonthly = monthly_leads * avg_ticket * userCloseRate;
@@ -102,11 +100,16 @@ export function calculateResults(answers: Answers): CalculationResult {
   const revenueGapLow = Math.round(totalGap * 0.85);
   const revenueGapHigh = Math.round(totalGap * 1.15);
 
+  // Potential with systems = what they earn today + the gap we just measured.
+  // The old benchmark-only figure (leads x ticket x 35%) fell below current
+  // revenue for anyone closing above 35%, so the numbers did not add up.
+  const potentialAnnual = currentAnnual + totalGap;
+
   // Score calculation (0-100)
   const closeRateScore = Math.min(25, (userCloseRate / INDUSTRY_BENCHMARK_CLOSE_RATE) * 25);
-  const speedScore = FOLLOW_UP_SPEED_SCORE[follow_up_speed] || 12;
-  const autoScore = AUTOMATION_SCORE[automation] || 15;
-  const trackScore = TRACKING_SCORE[tracking] || 15;
+  const speedScore = FOLLOW_UP_SPEED_SCORE[follow_up_speed] ?? 12;
+  const autoScore = AUTOMATION_SCORE[automation] ?? 15;
+  const trackScore = TRACKING_SCORE[tracking] ?? 15;
   const score = Math.round(Math.min(100, closeRateScore + speedScore + autoScore + trackScore));
 
   // Weak areas

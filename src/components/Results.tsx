@@ -70,18 +70,29 @@ export default function Results({ result, insights }: ResultsProps) {
         <p className="text-brand-muted text-sm uppercase tracking-wider mb-2 font-medium">
           ⚡ Estimated Annual Revenue Gap
         </p>
-        <div className="flex items-center justify-center gap-3 mb-4">
-          <span className="text-4xl md:text-6xl font-bold text-orange-400 glow-text">
-            {formatCurrency(result.revenueGapLow)}
-          </span>
-          <span className="text-2xl text-brand-muted">–</span>
-          <span className="text-4xl md:text-6xl font-bold text-orange-400 glow-text">
-            {formatCurrency(result.revenueGapHigh)}
-          </span>
-        </div>
-        <p className="text-lg text-brand-muted-light">
-          You&apos;re potentially leaving this on the table <strong className="text-brand-fg">every year</strong>.
-        </p>
+        {result.revenueGapHigh > 0 ? (
+          <>
+            <div className="flex items-center justify-center gap-3 mb-4">
+              <span className="text-4xl md:text-6xl font-bold text-orange-400 glow-text">
+                {formatCurrency(result.revenueGapLow)}
+              </span>
+              <span className="text-2xl text-brand-muted">–</span>
+              <span className="text-4xl md:text-6xl font-bold text-orange-400 glow-text">
+                {formatCurrency(result.revenueGapHigh)}
+              </span>
+            </div>
+            <p className="text-lg text-brand-muted-light">
+              You&apos;re potentially leaving this on the table <strong className="text-brand-fg">every year</strong>.
+            </p>
+          </>
+        ) : (
+          <>
+            <p className="text-3xl md:text-5xl font-bold text-brand-green mb-4">No measurable gap</p>
+            <p className="text-lg text-brand-muted-light">
+              Your answers show you capture what each storm creates. The next gain is the time your team spends running it.
+            </p>
+          </>
+        )}
 
         <div className="grid grid-cols-2 gap-4 mt-8 pt-6 border-t border-brand-border/50">
           <div>
@@ -197,7 +208,9 @@ export default function Results({ result, insights }: ResultsProps) {
           // High scorers → AI Audit (ready to buy)
           <>
             <p className="text-brand-muted mb-4">
-              Your systems are strong — but you&apos;re still leaving {formatCurrency(result.revenueGapLow)}+ on the table. A personalized AI Audit shows you exactly where to plug the remaining leaks.
+              {result.revenueGapLow > 0
+                ? <>Your systems are strong, but you&apos;re still leaving {formatCurrency(result.revenueGapLow)}+ on the table. A personalized AI Audit shows you exactly where to plug the remaining leaks.</>
+                : <>Your systems are strong. A personalized AI Audit shows where your team&apos;s time still goes, and what to hand off next.</>}
             </p>
             <motion.a
               href="https://aiaudit.razorsharpnetworks.com/"
