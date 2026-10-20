@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import { CARDS, shareMeta } from '@/lib/seo';
 import { locations, getLocationBySlug, getNearbyCities } from '@/data/locations';
 
 const SITE_URL = 'https://stormcalculator.razorsharpnetworks.com';
@@ -40,16 +41,7 @@ export async function generateMetadata({
       'storm revenue gap calculator',
       'RazoRSharp Networks',
     ],
-    alternates: {
-      canonical: `${SITE_URL}/${slug}`,
-    },
-    openGraph: {
-      title,
-      description,
-      type: 'website',
-      siteName: 'RazoRSharp Networks',
-      url: `${SITE_URL}/${slug}`,
-    },
+    ...shareMeta({ path: `/${slug}`, title, description, card: CARDS.local }),
   };
 }
 

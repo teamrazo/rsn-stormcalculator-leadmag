@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import { CARDS, shareMeta } from '@/lib/seo';
 import { locations } from '@/data/locations';
 
 const SITE_URL = 'https://stormcalculator.razorsharpnetworks.com';
@@ -110,7 +111,7 @@ export async function generateMetadata({
   if (stateLocs.length === 0) return {};
 
   const stateName = stateLocs[0].state;
-  const title = `Storm & Hail Damage Revenue Calculator — ${stateName} Cities | RazoRSharp Networks`;
+  const title = `Storm & Hail Damage Revenue Calculator for ${stateName} Cities | RazoRSharp Networks`;
   const description = `Find the Storm Revenue Calculator for your ${stateName} city. RazoRSharp Networks helps ${stateName} restoration contractors see exactly how much revenue they leave on the table after every storm.`;
 
   return {
@@ -123,16 +124,7 @@ export async function generateMetadata({
       `storm revenue gap ${stateName}`,
       `RazoRSharp Networks ${stateName}`,
     ],
-    alternates: {
-      canonical: `${SITE_URL}/states/${state}`,
-    },
-    openGraph: {
-      title,
-      description,
-      type: 'website',
-      siteName: 'RazoRSharp Networks',
-      url: `${SITE_URL}/states/${state}`,
-    },
+    ...shareMeta({ path: `/states/${state}`, title, description, card: CARDS.local }),
   };
 }
 

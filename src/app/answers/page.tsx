@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 
-const SITE_URL = 'https://stormcalculator.razorsharpnetworks.com';
+import { CARDS, shareMeta } from '@/lib/seo';
 
 export const metadata: Metadata = {
   title: 'Storm Revenue FAQ | RazoRSharp Networks',
@@ -20,25 +20,13 @@ export const metadata: Metadata = {
     'hail repair business growth',
     'storm season revenue optimization',
   ],
-  alternates: {
-    canonical: `${SITE_URL}/answers`,
-  },
-  openGraph: {
+  ...shareMeta({
+    path: '/answers',
     title: 'Storm Revenue FAQ | RazoRSharp Networks',
     description:
       'Get answers on storm revenue, lead follow-up, AI automation, CRM setup, and recovery opportunities for restoration businesses.',
-    type: 'website',
-    siteName: 'RazoRSharp Networks',
-    url: `${SITE_URL}/answers`,
-    images: [
-      {
-        url: `${SITE_URL}/opengraph-image`,
-        width: 1200,
-        height: 630,
-        alt: 'Storm Revenue FAQ | RazoRSharp Networks',
-      },
-    ],
-  },
+    card: CARDS.answers,
+  }),
 };
 
 const faqs = [

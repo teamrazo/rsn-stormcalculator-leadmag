@@ -6,6 +6,7 @@ import './side-tabs.css';
 import { BackToTop } from '@/components/BackToTop';
 import { Footer } from '@/components/Footer';
 import SideTabs from '@/components/SideTabs';
+import { SHARE_DESCRIPTION, SHARE_TITLE, SITE_URL, shareMeta } from '@/lib/seo';
 
 const GTM_ID = 'GTM-TMHF7F';
 
@@ -19,13 +20,11 @@ const inter = Inter({
 const rsnSerif = Playfair_Display({ subsets: ['latin'], weight: ['600'], display: 'swap', variable: '--font-rsn-serif', preload: false });
 const rsnMono = IBM_Plex_Mono({ subsets: ['latin'], weight: ['400'], display: 'swap', variable: '--font-rsn-mono', preload: false });
 
-const SITE_URL = 'https://stormcalculator.razorsharpnetworks.com';
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
-  title: 'Storm Revenue Recovery Calculator | RazoRSharp Networks',
-  description:
-    '6 questions. 90 seconds. See the exact dollar amount your storm restoration business is missing after every storm event.',
+  title: SHARE_TITLE,
+  description: SHARE_DESCRIPTION,
   keywords: [
     'storm restoration revenue',
     'storm readiness score',
@@ -39,9 +38,6 @@ export const metadata: Metadata = {
     'hail repair business growth',
     'storm season revenue optimization',
   ],
-  alternates: {
-    canonical: SITE_URL,
-  },
   robots: {
     index: true,
     follow: true,
@@ -53,29 +49,7 @@ export const metadata: Metadata = {
       'max-snippet': -1,
     },
   },
-  openGraph: {
-    title: 'Storm Revenue Recovery Calculator',
-    description:
-      'How much revenue are you leaving on the table after every storm? Find out in 90 seconds.',
-    type: 'website',
-    siteName: 'RazoRSharp Networks',
-    url: SITE_URL,
-    images: [
-      {
-        url: `${SITE_URL}/opengraph-image`,
-        width: 1200,
-        height: 630,
-        alt: 'Storm Revenue Recovery Calculator',
-      },
-    ],
-  },
-  twitter: {
-    card: 'summary_large_image',
-    title: 'Storm Revenue Recovery Calculator',
-    description:
-      'How much revenue are you leaving on the table after every storm? Find out in 90 seconds.',
-    images: [`${SITE_URL}/twitter-image`],
-  },
+  ...shareMeta({ path: '/', title: SHARE_TITLE, description: SHARE_DESCRIPTION }),
   icons: {
     icon: '/icon.png',
     apple: '/apple-touch-icon.png',
@@ -91,7 +65,9 @@ const jsonLd = {
     {
       '@type': 'Organization',
       name: 'RazoRSharp Networks',
+      legalName: 'Legacy Media LLC DBA RazoRSharp Networks',
       url: 'https://razorsharpnetworks.com',
+      logo: `${SITE_URL}/RSN_Logo_Purple.png`,
       description:
         'RazoRSharp Networks builds AI-powered growth systems for storm restoration businesses, helping them capture maximum revenue from every storm event through automation, lead management, and systematic follow-up.',
       sameAs: ['https://stormcalculator.razorsharpnetworks.com'],
@@ -99,7 +75,8 @@ const jsonLd = {
     {
       '@type': 'WebApplication',
       name: 'Storm Revenue Recovery Calculator',
-      url: SITE_URL,
+      url: `${SITE_URL}/calculator`,
+      image: `${SITE_URL}/og/og-storm.jpg`,
       description:
         '6 questions. 90 seconds. See the exact dollar amount your storm restoration business is missing after every storm event.',
       applicationCategory: 'BusinessApplication',
