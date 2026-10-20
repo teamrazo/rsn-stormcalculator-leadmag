@@ -11,12 +11,14 @@ const GTM_HOSTS = 'https://www.googletagmanager.com https://*.googletagmanager.c
 const GOOGLE_ADS = 'https://www.google.com https://*.doubleclick.net https://www.googleadservices.com';
 const CSP = [
   "default-src 'self'",
-  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ''} ${GTM_HOSTS} https://js.zi-scripts.com https://*.zoominfo.com https://www.googleadservices.com https://googleads.g.doubleclick.net`,
+  // blob: is required by ZoomInfo's zi-tag.js, which builds its loader as blob scripts.
+  `script-src 'self' 'unsafe-inline' blob:${isDev ? " 'unsafe-eval'" : ''} ${GTM_HOSTS} https://js.zi-scripts.com https://*.zoominfo.com https://www.googleadservices.com https://googleads.g.doubleclick.net`,
   "style-src 'self' 'unsafe-inline'",
   `img-src 'self' data: blob: ${GTM_HOSTS} ${GOOGLE_ADS} https://*.zoominfo.com`,
   "font-src 'self' data:",
   `connect-src 'self' ${GTM_HOSTS} ${GOOGLE_ADS} https://js.zi-scripts.com https://*.zoominfo.com`,
   "frame-src https://www.googletagmanager.com https://td.doubleclick.net https://*.zoominfo.com",
+  "worker-src 'self' blob:",
   "object-src 'none'",
   "base-uri 'self'",
   "form-action 'self'",
