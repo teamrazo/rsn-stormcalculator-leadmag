@@ -1,6 +1,9 @@
 import { Attribution, attributionFields, attributionNote } from '@/lib/attribution';
 const BASE_URL = "https://services.leadconnectorhq.com";
 
+// Free TimeBACK Discovery Call. Decision D051. The old storm-audit calendar URL 404s.
+const BOOKING_URL = "https://razorsharpnetworks.com/book";
+
 function getEnv(name: string) {
   return process.env[name] || "";
 }
@@ -39,9 +42,6 @@ export async function findContactByEmail(email: string) {
   if (!locationId) throw new Error("Missing GHL_LOCATION_ID");
   const normalizedEmail = email.trim().toLowerCase();
 
-  // Use /contacts/search with exact email filter for reliable deduplication.
-  // When multiple contacts share the same email, this returns them sorted by
-  // dateUpdated desc — so we always update the most recently active record.
   const { ok, status, json, text } = await ghlFetch(`/contacts/search`, {
     method: "POST",
     body: JSON.stringify({
@@ -91,12 +91,9 @@ export async function addContactNote(contactId: string, note: string) {
   return ok;
 }
 
-// Storm Revenue Calculator custom field IDs (GHL) - Workflow Spec Aligned
+// Storm Revenue Calculator custom field IDs (GHL).
 const STORM_CUSTOM_FIELDS: Record<string, string> = {
-  storms_last_12_months: "bPGSGQSEJQdygXJpcWXc",
-  avg_jobs_closed_per_storm: "DEVCqKsgaA7PczfEfiiS",
   avg_job_ticket: "XmQfC0pM3vVe8nNyoARe",
-  unclosed_leads_per_storm: "jC5rvq1zKdlOdg4Je1fd",
   follow_up_speed: "EMjSM5eavXCVaLOdFY8b",
   biggest_bottleneck: "t8yAyyTyHXK1vhjQIqka",
   revenue_captured: "PaizVlylGet2HLavdovy",
@@ -121,50 +118,48 @@ export interface StormCalculatorData {
   followUpSpeed: string;
   automationLevel: string;
   trackingMethod: string;
-  // Additional fields for workflow spec alignment
-  stormsLast12Months?: number;
-  avgJobsClosedPerStorm?: number;
-  unclosedLeadsPerStorm?: number;
   biggestBottleneck?: string;
   speedPenalty?: number;
   bookingLink?: string;
 }
 
-function buildCustomFieldValues(data: StormCalculatorData): { id: string; field_value: string | number }[] {
-  // Calculate derived values for workflow spec fields
-  const stormsLast12Months = data.stormsLast12Months || 3; // Default estimate
-  const avgJobsClosedPerStorm = Math.round((data.monthlyLeads * (data.closeRate / 100)) / stormsLast12Months) || 10;
-  const unclosedLeadsPerStorm = Math.round((data.monthlyLeads * (1 - data.closeRate / 100)) / stormsLast12Months) || 5;
-  const speedPenalty = data.speedPenalty || Math.round(data.revenueGapLow * 0.3); // Speed accounts for ~30% of gap
-  
-  // Determine biggest bottleneck based on score components
-  let biggestBottleneck = data.biggestBottleneck;
-  if (!biggestBottleneck) {
-    if (data.followUpSpeed.includes('24') || data.followUpSpeed.includes('hours')) {
-      biggestBottleneck = 'Slow lead response';
-    } else if (data.automationLevel.includes('Manual') || data.automationLevel.includes('None')) {
-      biggestBottleneck = 'No automation';
-    } else if (data.closeRate < 30) {
-      biggestBottleneck = 'Poor close rate';
-    } else {
-      biggestBottleneck = 'Lead tracking';
-    }
+// Same rates as src/lib/calculator.ts. A best-case answer is 0, so do not use ||.
+const FOLLOW_UP_SPEED_PENALTY: Record<string, number> = {
+  within_1_hour: 0,
+  same_day: 0.05,
+  next_day: 0.10,
+  "2_3_days": 0.15,
+  week_plus: 0.25,
+};
+
+function classifyBottleneck(data: StormCalculatorData): string {
+  if (data.biggestBottleneck) return data.biggestBottleneck;
+  const speed = data.followUpSpeed;
+  if (speed === "next_day" || speed === "2_3_days" || speed === "week_plus") {
+    return "Slow lead response";
   }
+  if (data.automationLevel === "none") return "No automation";
+  if (data.automationLevel === "partial") return "Partial automation";
+  if (data.closeRate < 30) return "Low close rate";
+  if (data.trackingMethod === "paper" || data.trackingMethod === "head") return "Lead tracking";
+  return "None flagged";
+}
+
+function buildCustomFieldValues(data: StormCalculatorData): { id: string; field_value: string | number }[] {
+  const speedRate = FOLLOW_UP_SPEED_PENALTY[data.followUpSpeed] ?? 0;
+  const speedPenalty = data.speedPenalty ?? Math.round(data.currentRevenue * speedRate);
 
   return [
-    { id: STORM_CUSTOM_FIELDS.storms_last_12_months, field_value: stormsLast12Months },
-    { id: STORM_CUSTOM_FIELDS.avg_jobs_closed_per_storm, field_value: avgJobsClosedPerStorm },
     { id: STORM_CUSTOM_FIELDS.avg_job_ticket, field_value: data.avgTicket },
-    { id: STORM_CUSTOM_FIELDS.unclosed_leads_per_storm, field_value: unclosedLeadsPerStorm },
-    { id: STORM_CUSTOM_FIELDS.follow_up_speed, field_value: data.followUpSpeed.replace(/_/g, ' ') },
-    { id: STORM_CUSTOM_FIELDS.biggest_bottleneck, field_value: biggestBottleneck },
+    { id: STORM_CUSTOM_FIELDS.follow_up_speed, field_value: data.followUpSpeed.replace(/_/g, " ") },
+    { id: STORM_CUSTOM_FIELDS.biggest_bottleneck, field_value: classifyBottleneck(data) },
     { id: STORM_CUSTOM_FIELDS.revenue_captured, field_value: data.currentRevenue },
     { id: STORM_CUSTOM_FIELDS.revenue_missed, field_value: data.revenueGapLow },
     { id: STORM_CUSTOM_FIELDS.speed_penalty, field_value: speedPenalty },
     { id: STORM_CUSTOM_FIELDS.annual_recovery_opportunity, field_value: data.revenueGapHigh },
     { id: STORM_CUSTOM_FIELDS.storm_readiness_score, field_value: data.score },
-    { id: STORM_CUSTOM_FIELDS.booking_link, field_value: data.bookingLink || 'https://calendar.razorsharpnetworks.com/storm-audit' },
-    { id: STORM_CUSTOM_FIELDS.storm_calculator_date, field_value: new Date().toISOString().split('T')[0] },
+    { id: STORM_CUSTOM_FIELDS.booking_link, field_value: data.bookingLink || BOOKING_URL },
+    { id: STORM_CUSTOM_FIELDS.storm_calculator_date, field_value: new Date().toISOString().split("T")[0] },
   ];
 }
 
@@ -180,16 +175,13 @@ export async function upsertStormContact(input: {
     ? { customFields: buildCustomFieldValues(input.calculatorData) }
     : {};
 
-  // First/last-touch attribution (RSN standard, lib/attribution.ts): new
-  // contacts get first_* + last_*, existing contacts get last_* only.
   const withAttribution = async (id: string, patch: Record<string, any>, isNew: boolean) => {
     const extra = input.attribution ? attributionFields(input.attribution, isNew) : [];
     try {
       await updateContact(id, { ...patch, customFields: [...(patch.customFields || []), ...extra] });
     } catch (err) {
       if (!extra.length) throw err;
-      // Location may not have the attribution fields yet: save everything else.
-      console.warn('[storm-calc] attribution fields rejected, retrying without them');
+      console.warn("[storm-calc] attribution fields rejected, retrying without them");
       await updateContact(id, patch);
     }
   };
@@ -206,7 +198,6 @@ export async function upsertStormContact(input: {
     return { contactId: created.id, created: true };
   }
   const mergedTags = Array.from(new Set([...(existing.tags || []), ...input.tagsToAdd]));
-  // Existing contact: name, email and company are not overwritten; tags merge.
   await withAttribution(existing.id, {
     tags: mergedTags,
     ...customFieldPayload,
