@@ -25,14 +25,16 @@ export default function LeadCapture({ onSubmit, answers, result }: LeadCapturePr
     phone: '',
   });
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
   const isValid = form.name.trim() && form.email.trim() && form.company.trim();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isValid) return;
+    if (!isValid || loading) return;
 
     setLoading(true);
+    setError('');
 
     const payload = {
       name: form.name.trim(),
@@ -57,10 +59,15 @@ export default function LeadCapture({ onSubmit, answers, result }: LeadCapturePr
           attribution: (window as unknown as { RSNAttribution?: { get: (f: string) => unknown } }).RSNAttribution?.get('storm calculator'),
         }),
       });
-      const data = await res.json();
-      console.log('[storm-calc] Submission result:', data);
-    } catch (err) {
-      console.error('[storm-calc] Submission error:', err);
+      if (!res.ok) {
+        setError('We could not save your results. Check your connection and try again.');
+        setLoading(false);
+        return;
+      }
+    } catch {
+      setError('We could not save your results. Check your connection and try again.');
+      setLoading(false);
+      return;
     }
 
     setLoading(false);
@@ -76,13 +83,13 @@ export default function LeadCapture({ onSubmit, answers, result }: LeadCapturePr
     >
       <div className="text-center mb-8">
         <div className="inline-flex items-center gap-2 bg-brand-primary/10 border border-brand-primary/20 rounded-full px-4 py-2 mb-4">
-          <span className="text-brand-primary text-sm font-medium">✨ Your results are ready</span>
+          <span className="text-brand-primary text-sm font-medium">Your results are ready</span>
         </div>
         <h2 className="text-2xl md:text-3xl font-bold text-brand-fg mb-2">
           Where should we send your report?
         </h2>
         <p className="text-brand-muted">
-          Enter your details to unlock your Storm Revenue Recovery Score and see exactly how much you&apos;re leaving on the table.
+          Enter your details to unlock your Storm Revenue Recovery Score and see exactly how much you're leaving on the table.
         </p>
       </div>
 
@@ -127,6 +134,10 @@ export default function LeadCapture({ onSubmit, answers, result }: LeadCapturePr
           />
         </div>
 
+        {error && (
+          <p className="text-sm text-brand-fg" role="alert">{error}</p>
+        )}
+
         <motion.button
           type="submit"
           disabled={!isValid || loading}
@@ -134,21 +145,11 @@ export default function LeadCapture({ onSubmit, answers, result }: LeadCapturePr
           whileHover={isValid ? { scale: 1.02 } : {}}
           whileTap={isValid ? { scale: 0.98 } : {}}
         >
-          {loading ? (
-            <span className="flex items-center justify-center gap-2">
-              <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-              </svg>
-              Calculating...
-            </span>
-          ) : (
-            'Reveal My Revenue Gap →'
-          )}
+          {loading ? 'Saving...' : 'Reveal My Revenue Gap'}
         </motion.button>
 
         <p className="text-center text-xs text-brand-muted mt-3">
-          🔒 Your info is private. No spam, ever.
+          Your info is private. No spam.
         </p>
       </form>
     </motion.div>
