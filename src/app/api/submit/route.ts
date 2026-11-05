@@ -21,6 +21,10 @@ function checkRateLimit(ip: string): boolean {
   return true;
 }
 
+function asText(value: unknown): string {
+  return typeof value === "string" ? value.trim() : "";
+}
+
 function asAnswers(raw: unknown): Answers | null {
   if (!raw || typeof raw !== "object") return null;
   const a = raw as Record<string, unknown>;
@@ -59,7 +63,7 @@ function buildGhlNote(params: {
   const fmtCurrency = (n: number) => n >= 1000000 ? `$${(n / 1000000).toFixed(1)}M` : `$${n.toLocaleString()}`;
 
   return [
-    "STORM REVENUE RECOVERY CALCULATOR \u2014 SUBMISSION",
+    "STORM REVENUE RECOVERY CALCULATOR - SUBMISSION",
     "Name:     " + name,
     "Email:    " + email,
     "Company:  " + (company || "N/A"),
@@ -94,7 +98,10 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { name, email, company, phone } = body ?? {};
+    const name = asText(body?.name);
+    const email = asText(body?.email);
+    const company = asText(body?.company);
+    const phone = asText(body?.phone);
     const answers = asAnswers(body?.answers);
 
     if (!name || !email || !answers) {
@@ -110,12 +117,12 @@ export async function POST(req: NextRequest) {
     const weakAreas = result.weakAreas.map((w) => w.label);
 
     const submittedAt = new Date().toISOString();
-
     console.log(`[storm-calc] score=${score}/100 | gap=$${revenueGapLow}-$${revenueGapHigh}`);
 
     const GHL_ENABLED = Boolean(process.env.GHL_PRIVATE_TOKEN && process.env.GHL_LOCATION_ID);
     let ghlContactId: string | null = null;
     let ghlCreated = false;
+    let ghlFailed = false;
 
     if (GHL_ENABLED) {
       try {
@@ -142,7 +149,7 @@ export async function POST(req: NextRequest) {
 
         const saved = await upsertStormContact({
           fullName: name,
-          email: String(email).trim().toLowerCase(),
+          email: email.toLowerCase(),
           phone: phone || undefined,
           companyName: company || undefined,
           tagsToAdd: [
@@ -160,29 +167,33 @@ export async function POST(req: NextRequest) {
         ghlCreated = saved.created;
         console.log(`[storm-calc] GHL ${ghlCreated ? "created" : "updated"} contact`);
       } catch (ghlErr) {
+        ghlFailed = true;
         console.warn("[storm-calc] GHL sync failed:", ghlErr);
-        return NextResponse.json({ error: "We could not save your results. Try again." }, { status: 502 });
       }
     }
 
     const SLACK_WEBHOOK = process.env.SLACK_NOTIFICATION_WEBHOOK;
     const fmtCurrency = (n: number) => n >= 1000000 ? `$${(n / 1000000).toFixed(1)}M` : `$${n.toLocaleString()}`;
-
+    const ghlLine = ghlFailed
+      ? "Save failed"
+      : ghlContactId
+        ? `${ghlCreated ? "Created" : "Updated"} contact`
+        : "Not synced";
     const ghlContactUrl = ghlContactId
-      ? `\n\u2022 *GHL Contact:* <https://app.leadconnectorhq.com/contacts/${ghlContactId}|View in GHL>`
+      ? `\n- *GHL Contact:* <https://app.leadconnectorhq.com/contacts/${ghlContactId}|View in GHL>`
       : "";
 
     const slackText =
       `*New Storm Revenue Calculator Submission*\n` +
-      `\u2022 *Name:* ${name}\n` +
-      `\u2022 *Email:* ${email}\n` +
-      `\u2022 *Company:* ${company || "N/A"}\n` +
-      `\u2022 *Phone:* ${phone || "N/A"}\n` +
-      `\u2022 *Score:* ${score}/100\n` +
-      `\u2022 *Revenue Gap:* ${fmtCurrency(revenueGapLow)} to ${fmtCurrency(revenueGapHigh)}\n` +
-      `\u2022 *Weak Areas:* ${weakAreas.join(", ") || "None"}\n` +
-      `\u2022 *GHL:* ${ghlContactId ? `${ghlCreated ? "Created" : "Updated"} contact` : "Not synced"}${ghlContactUrl}\n` +
-      `\u2022 *Time:* ${new Date(submittedAt).toLocaleString("en-US", { timeZone: "America/Los_Angeles" })}`;
+      `- *Name:* ${name}\n` +
+      `- *Email:* ${email}\n` +
+      `- *Company:* ${company || "N/A"}\n` +
+      `- *Phone:* ${phone || "N/A"}\n` +
+      `- *Score:* ${score}/100\n` +
+      `- *Revenue Gap:* ${fmtCurrency(revenueGapLow)} to ${fmtCurrency(revenueGapHigh)}\n` +
+      `- *Weak Areas:* ${weakAreas.join(", ") || "None"}\n` +
+      `- *GHL:* ${ghlLine}${ghlContactUrl}\n` +
+      `- *Time:* ${new Date(submittedAt).toLocaleString("en-US", { timeZone: "America/Los_Angeles" })}`;
 
     if (SLACK_WEBHOOK) {
       try {
@@ -195,6 +206,10 @@ export async function POST(req: NextRequest) {
       } catch (slackErr) {
         console.warn("[storm-calc] Slack notification failed:", slackErr);
       }
+    }
+
+    if (ghlFailed) {
+      return NextResponse.json({ error: "We could not save your results. Try again." }, { status: 502 });
     }
 
     return NextResponse.json({
